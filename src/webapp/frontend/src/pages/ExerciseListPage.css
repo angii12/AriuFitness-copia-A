@@ -36,6 +36,30 @@
     font-size: clamp(1.4rem, 5vw, 1.8rem);
     color: #8b5a3c;
   }
+
+  .chronology-button {
+    padding: clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px);
+    background-color: #8b5a3c;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(139, 90, 60, 0.2);
+    white-space: nowrap;
+  }
+
+  .chronology-button:hover {
+    background-color: #6b4428;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 90, 60, 0.3);
+  }
+
+  .chronology-button:active {
+    transform: translateY(0);
+  }
   
   /* Layout a due colonne che non si deforma */
   .content-layout {

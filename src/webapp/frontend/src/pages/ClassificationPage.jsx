@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Pose, POSE_CONNECTIONS } from "@mediapipe/pose";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { Camera } from "@mediapipe/camera_utils";
+import { supabase } from '../SupabaseClient';
 import '../Dashboard.css';
 import './ClassificationPage.css';
 
@@ -32,6 +33,7 @@ function ClassificationPage() {
   const [completedExercises, setCompletedExercises] = useState([]);
   const [exerciseStartTime, setExerciseStartTime] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentExerciseStarted, setCurrentExerciseStarted] = useState(false);
 
   const videoRef = useRef(null);
 
@@ -147,23 +149,52 @@ function ClassificationPage() {
     }
   }, [location?.state]);
 
+  /*funzione per tracciare un esercizio saltato (non iniziato)*/
+  const trackSkippedExercise = (exercise) => {
+    if (exercise && exercise.id && exercise.nome) {
+      const skippedExerciseData = {
+        exercise_id: exercise.id,
+        exercise_name: exercise.nome,
+        completed: false,
+        reps: 0,
+        feedback: null,
+        timestamp: new Date().toISOString(),
+      };
+      
+      setCompletedExercises(prev => [...prev, skippedExerciseData]);
+      console.log('Esercizio saltato tracciato:', skippedExerciseData);
+    }
+  };
+
   /*funzione per avanzare al prossimo esercizio dopo il feedback, usata sia quando l'utente dà un feedback normale (facil/medio/difficile) sia quando conferma di voler continuare dopo aver dato un feedback difficile*/
   const advanceAfterExerciseFeedback = () => {
     const nextIndex = currentExerciseIndex + 1;
 
     if (nextIndex < selectedExercises.length) {
+      // Se l'esercizio attuale non è stato iniziato, traccialo come saltato
+      if (selectedExercise && !currentExerciseStarted) {
+        trackSkippedExercise(selectedExercise);
+      }
+      
       setCurrentExerciseIndex(nextIndex);
       setSelectedExercise(null);
       setReps(0);
+      setCurrentExerciseStarted(false);
       setPhrase("Seleziona il prossimo esercizio per continuare.");
       resetExerciseRuntimeState();
       return;
     }
 
     // Se era l'ultimo esercizio, consideriamo la sessione finita
+    // Se non è stato iniziato, traccialo come saltato
+    if (selectedExercise && !currentExerciseStarted) {
+      trackSkippedExercise(selectedExercise);
+    }
+    
     setCurrentExerciseIndex(selectedExercises.length);
     setSelectedExercise(null);
     setSelectedTutorial(null);
+    setCurrentExerciseStarted(false);
     resetExerciseRuntimeState();
     setPhrase('Hai Finito!');
   };
@@ -174,6 +205,24 @@ function ClassificationPage() {
   direttamente al prossimo esercizio*/
   const handleFeedbackSubmit = (feedback) => {
     console.log(`Feedback esercizio: ${feedback}`);
+    
+    // Traccia il feedback dell'esercizio completato SOLO se è stato iniziato
+    if (selectedExercise && currentExerciseStarted) {
+      const exerciseData = {
+        exercise_id: selectedExercise.id,
+        exercise_name: selectedExercise.nome,
+        completed: reps >= currentTargetReps,
+        reps: reps,
+        feedback: feedback,
+        timestamp: exerciseStartTime 
+          ? new Date(exerciseStartTime).toISOString() 
+          : new Date().toISOString(),
+      };
+      
+      // Aggiungi ai completed exercises
+      setCompletedExercises(prev => [...prev, exerciseData]);
+      console.log('Esercizio tracciato:', exerciseData);
+    }
     
     setIsFeedbackModalVisible(false);
 
@@ -206,15 +255,111 @@ function ClassificationPage() {
     navigate('/');
   };
 
+  /*funzione per salvare i dati degli esercizi completati in database*/
+  const saveWorkoutToDatabase = async (workoutFeedback, exercisesToSave = completedExercises) => {
+    try {
+      setIsSaving(true);
+      
+      // Ottieni l'utente da localStorage
+      const userJson = localStorage.getItem('user');
+      if (!userJson) {
+        console.error('Errore: utente non trovato in localStorage');
+        return false;
+      }
+      
+      const user = JSON.parse(userJson);
+      const userId = user.id;
+      
+      console.log(`Salvataggio workout per utente: ${userId}`);
+      console.log(`Numero di esercizi completati: ${exercisesToSave.length}`);
+      
+      // Salva ogni esercizio nel database
+      for (const exercise of exercisesToSave) {
+        const { error } = await supabase
+          .from('allenamenti')
+          .insert([
+            {
+              utente: userId,
+              esercizio: exercise.exercise_id,
+              completato: exercise.completed,
+              feedback: exercise.feedback,
+            }
+          ]);
+        
+        if (error) {
+          console.error('Errore nel salvataggio dell\'esercizio:', error);
+          return false;
+        }
+        
+        console.log(`Esercizio ${exercise.exercise_name} salvato con successo`);
+      }
+      
+      console.log('Workout salvato completamente');
+      return true;
+    } catch (err) {
+      console.error('Errore durante il salvataggio del workout:', err);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   /*funzione chiamata quando l'utente decide di terminare l'allenamento, 
   chiude il pop-up, ferma la webcam e reindirizza alla home*/
   const handleFinishWorkout = async (feedback) => {
     // Se il feedback è un commento e non una faccina, usa il testo del commento
     const finalFeedback = feedback === 'comment' ? workoutComment : feedback;
     console.log(`Feedback finale allenamento: ${finalFeedback}`);
+    console.log(`Esercizi completati: ${completedExercises.length}`);
     
     // Chiudi il pop-up
     setIsWorkoutFeedbackModalVisible(false);
+    
+    // Controlla se c'è un esercizio in corso non tracciato
+    let exercisesToSave = [...completedExercises];
+    if (selectedExercise && currentExerciseIndex < selectedExercises.length) {
+      // Verifica se questo esercizio è già stato tracciato
+      const alreadyTracked = completedExercises.some(ex => ex.exercise_id === selectedExercise.id);
+      
+      if (!alreadyTracked) {
+        // Se l'esercizio è stato iniziato
+        if (currentExerciseStarted) {
+          const lastExerciseData = {
+            exercise_id: selectedExercise.id,
+            exercise_name: selectedExercise.nome,
+            completed: reps >= currentTargetReps,
+            reps: reps,
+            feedback: finalFeedback, // Default feedback se non è stato fornito
+            timestamp: exerciseStartTime 
+              ? new Date(exerciseStartTime).toISOString() 
+              : new Date().toISOString(),
+          };
+          exercisesToSave = [...exercisesToSave, lastExerciseData];
+          console.log('Ultimo esercizio aggiunto al salvataggio:', lastExerciseData);
+        } else {
+          // Se l'esercizio NON è stato iniziato, traccialo come saltato
+          const skippedExerciseData = {
+            exercise_id: selectedExercise.id,
+            exercise_name: selectedExercise.nome,
+            completed: false,
+            reps: 0,
+            feedback: null,
+            timestamp: new Date().toISOString(),
+          };
+          exercisesToSave = [...exercisesToSave, skippedExerciseData];
+          console.log('Esercizio saltato aggiunto al salvataggio:', skippedExerciseData);
+        }
+      }
+    }
+    
+    // Salva il workout nel database
+    const saved = await saveWorkoutToDatabase(finalFeedback, exercisesToSave);
+    
+    if (saved) {
+      console.log('Workout salvato con successo!');
+    } else {
+      console.warn('Errore nel salvataggio del workout, ma comunque reindirizzando...');
+    }
     
     // Spegni la webcam e altre pulizie se necessario
     stopWebcam();
@@ -356,6 +501,7 @@ function ClassificationPage() {
   const handleExerciseSelect = (exercise) => {
     if (exercise && exercise.id && exercise.nome) {
       setSelectedExercise(exercise);
+      setCurrentExerciseStarted(false);
       // Carica il video tutorial dall'oggetto esercizio
       if (exercise.video_tut_url) {
         setSelectedTutorial(exercise.video_tut_url);
@@ -368,6 +514,7 @@ function ClassificationPage() {
     if (!selectedExercise || !isWebcamActive) {
       return;
     }
+    setCurrentExerciseStarted(true);
     setIsStartLocked(true);
     setCountdown(5);
   };
