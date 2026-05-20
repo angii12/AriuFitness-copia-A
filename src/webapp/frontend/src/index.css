@@ -2,24 +2,24 @@
 
 :root {
   width: 100%;
-  --primary-color: #8b5a3c; 
-  --secondary-color: #d57a18;
+  --primary-color: #FFFFFF; 
+  --secondary-color: #5B120F;
   --text-color: #2d2d2d;
   --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
-  --background-main: #f5e6d3;
+  /*--background-main: #f5e6d3;
   --card-bg: #ffffff;
-  --border-light: #d4c4b0;
+  --border-light: #d4c4b0;*/
 }
 
-a {
+/*a {
   font-weight: 500;
   color: #8b5a3c;
   text-decoration: inherit;
 }
 a:hover {
   color: #d57a18;
-}
+}*/
 
 body {
   margin: 0;
@@ -29,7 +29,7 @@ body {
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: radial-gradient(circle at center, #a15d35 0%, #f8e0c7 100%);
+  background: #5B120F;
   color: #2d2d2d;
 }
 
@@ -51,7 +51,7 @@ button {
   transition: all 0.25s;
 }
 button:hover {
-  background-color: #d4c4b0;
+  background-color: #5b120f46;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 button:focus,
@@ -64,9 +64,9 @@ button:focus-visible {
     color: #2d2d2d;
     background-color: #f5e6d3;
   }
-  a:hover {
+  /*a:hover {
     color: #d57a18;
-  }
+  }*/
   button {
     background-color: #8b5a3c;
     color: #ffffff;
@@ -146,9 +146,9 @@ button:focus-visible {
   }
 }
 
-.page-content {
-  padding-top: 80px; /* Deve essere circa l'altezza del tuo header */
-}
+/*.page-content {
+  padding-top: 80px;  Deve essere circa l'altezza del tuo header 
+}*/
 
 #root, .page-content {
   height: 100%;

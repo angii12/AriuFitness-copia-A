@@ -8,6 +8,7 @@ import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import Profilo from './pages/Profilo';
 import ChronologyPage from './pages/ChronologyPage';
+import WelcomePage from './pages/WelcomePage'; 
 const isAuthenticated = () => localStorage.getItem('token') !== null;
 
 const PrivateRoute = ({ children }) => {
@@ -17,13 +18,14 @@ const PrivateRoute = ({ children }) => {
 function App() {
   return (
     <Router>
-      <GlobalHeader /> {/* L'header è qui, fuori dalle rotte, quindi è sempre visibile */}
+      
 
       {/* Un contenitore per il contenuto della pagina che evita di finire sotto l'header */}
       <main className="page-content">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/live-session" element={<PrivateRoute><ClassificationPage /></PrivateRoute>} />
           <Route path="/allenamento" element={<PrivateRoute><ClassificationPage /></PrivateRoute>} />
