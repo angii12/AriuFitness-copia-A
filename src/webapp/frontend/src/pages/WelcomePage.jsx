@@ -21,7 +21,7 @@ const WelcomePage = () => {
 
   const handleIniziaPercorso = () => {
     if (isAuthenticated) {
-      navigate('/home');
+      navigate('/');
     } else {
       navigate('/login');
     }

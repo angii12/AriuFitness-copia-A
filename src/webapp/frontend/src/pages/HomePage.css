@@ -1,71 +1,153 @@
-.home-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - 80px);
-    padding: clamp(15px, 5vw, 20px);
-  }
-  
-  .home-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: clamp(20px, 5vw, 40px);
-  }
-
-  .home-image {
-    max-width: 500px;
-    width: 100%;
-    height: auto;
-    border-radius: 20px;
-  }
-
-  .start-workout-button {
-    display: inline-block;
-    padding: clamp(12px, 3vw, 18px) clamp(30px, 8vw, 60px);
-    background: #8b5a3c;
-    color: #ffffff;
-    border: none;
-    border-radius: 15px;
-    font-size: clamp(1rem, 2.5vw, 1.3rem);
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-shadow: 0 4px 15px rgba(139, 90, 60, 0.3);
-  }
-
-  .start-workout-button:hover {
-    background: #f5e6d3;
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(61, 107, 32, 0.4);
-  }
-
-  .start-workout-button:active {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(61, 107, 32, 0.3);
-  }
-
-  
-@media (max-width: 768px) {
-    .home-container {
-      min-height: auto;
-      padding: clamp(10px, 4vw, 15px);
-    }
-
-    .home-content {
-      gap: clamp(15px, 4vw, 25px);
-    }
+.page-content {
+  margin-top: 0px; /* Spazio per la navbar fissa */
 }
 
-@media (max-width: 480px) {
-    .home-container {
-      min-height: auto;
-      padding: 10px;
-    }
+/* --- STILI BASE (Ottimizzati per Mobile) --- */
 
-    .start-workout-button {
-      padding: clamp(10px, 2.5vw, 15px) clamp(20px, 5vw, 40px);
-    }
+.home-container {
+  background-color: #B5A281; /* Sfondo beige richiesto */
+  min-height: 100vh;
+  padding: 30px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Wrapper per limitare la larghezza massima complessiva anche su schermi enormi */
+.home-wrapper {
+  width: 100%;
+  max-width: 450px; /* Default mobile */
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+
+.panels-grid {
+  position: relative;
+  margin-top: 40px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Stile dei Glass Panel */
+.glass-panel {
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  min-height: 380px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+/* --- IL VERO BACKGROUND CON OPACITÀ ISOLATA --- */
+.glass-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* Recupera l'immagine passata da React */
+  background-image: var(--bg-image); 
+  background-size: cover;
+  background-position: center;
+  
+  /* Mantiene lo sfondo dietro ai testi */
+  z-index: 0; 
+
+  /* Maschera sfumata: rende l'immagine opaca (0.25) in alto e nitida (1) in basso */
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 1) 70%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 1) 70%);
+}
+
+.panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.panel-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+}
+
+.panel-title {
+  font-size: 1.4rem;
+  color: #ffffff;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.panel-button {
+  display: inline-block;
+  background-color: #ffffff;
+  color: #000000;
+  text-decoration: none;
+  text-align-last: center;
+  padding: 12px 35px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.panel-button:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.03);
+}
+
+
+/* --- STRUTTURA PER COMPUTER (Desktop / Tablet grandi) --- */
+@media (min-width: 768px) {
+  .page-content {
+    margin-top: 0px; /* Spazio per la navbar fissa */
+  }
+
+  .home-wrapper {
+    max-width: 1200px; /* Allarghiamo il contenitore su PC */
+    padding: 20px;
+  }
+
+
+  .panels-grid {
+    position: relative;
+    margin-top: 80px;
+    flex-direction: row;
+    flex-wrap: wrap; /* Permette ai pannelli di andare a capo */
+    justify-content: center; /* Centra l'ultima riga da 2 pannelli */
+    gap: 30px; /* Più spazio tra i pannelli su desktop */
+  }
+
+  .glass-panel {
+    /* Calcolo per avere 3 colonne precise togliendo lo spazio del gap */
+    width: calc(33.333% - 20px); 
+    min-width: 300px; /* Impedisce che diventino troppo stretti */
+    min-height: 420px; /* Più respiro verticale su desktop */
+    padding: 30px;
+  }
 }
