@@ -1,0 +1,40 @@
+/* === REGISTER.CSS ===
+   Styling specifici per la pagina di registrazione
+*/
+
+/* Il contenitore deve avere la stessa larghezza degli altri input */
+.password-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* L'input deve occupare tutto lo spazio del contenitore */
+.password-container .form-input {
+  width: 100%;
+  padding-right: 60px;
+  box-sizing: border-box;
+}
+
+/* Il tasto "Mostra" viene ancorato dentro l'input */
+.show-password-button {
+  position: absolute;
+  right: 8px;
+  top: 40%;
+  transform: translateY(-50%); /* Lo centra perfettamente in verticale */
+  cursor: pointer;
+  padding: 4px 10px; 
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none; /* Impedisce di selezionare il testo per sbaglio cliccando */
+  background: #5B120F;
+  color: #ffffff;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.show-password-button:hover {
+  background: #93100b;
+  transform: translateY(-50%) scale(1.05);
+}

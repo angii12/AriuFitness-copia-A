@@ -4,7 +4,7 @@ import { supabase } from '../SupabaseClient';
 const ColorContext = createContext();
 
 export const ColorProvider = ({ children }) => {
-  const [backgroundColor, setBackgroundColor] = useState('#B5A281');
+  const [backgroundColor, setBackgroundColor] = useState('#5B120F');
 
   // Mappa dei colori disponibili
   const coloriDisponibili = {
@@ -12,6 +12,13 @@ export const ColorProvider = ({ children }) => {
     verde: '#4B8C56',
     blu: '#2D69A0',
     nero: '#1B191A'
+  };
+
+  const defaultColor = '#5B120F';
+
+  const resetColor = () => {
+    setBackgroundColor(defaultColor);
+    document.documentElement.style.setProperty('--page-bg-color', defaultColor);
   };
 
   useEffect(() => {
@@ -34,6 +41,7 @@ export const ColorProvider = ({ children }) => {
           if (profile && profile.colore_ariu) {
             const colore = coloriDisponibili[profile.colore_ariu] || coloriDisponibili.beige;
             setBackgroundColor(colore);
+            document.documentElement.style.setProperty('--page-bg-color', colore);
           }
         }
       } catch (err) {
@@ -45,7 +53,7 @@ export const ColorProvider = ({ children }) => {
   }, []);
 
   return (
-    <ColorContext.Provider value={{ backgroundColor, coloriDisponibili }}>
+    <ColorContext.Provider value={{ backgroundColor, coloriDisponibili, resetColor }}>
       {children}
     </ColorContext.Provider>
   );

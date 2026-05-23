@@ -4,7 +4,7 @@
   align-items: center;
   min-height: calc(100vh - 80px);
   padding: clamp(10px, 4vw, 20px);
-  background: #5B120F;
+  background: var(--page-bg-color, #5B120F);;
   overflow: hidden;
 }
   
@@ -84,43 +84,6 @@
     transform: translateY(-3px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
-
-/* Il contenitore deve avere la stessa larghezza degli altri input */
-.password-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-
-/* L'input deve occupare tutto lo spazio del contenitore */
-.password-container .form-input {
-  width: 100%;
-  padding-right: 60px;
-  box-sizing: border-box;
-}
-
-/* Il tasto "Mostra" viene ancorato dentro l'input */
-.show-password-button {
-  position: absolute;
-  right: 8px;
-  top: 40%;
-  transform: translateY(-50%); /* Lo centra perfettamente in verticale */
-  cursor: pointer;
-  padding: 4px 10px; 
-  font-size: 12px;
-  font-weight: bold;
-  user-select: none; /* Impedisce di selezionare il testo per sbaglio cliccando */
-  background: #5B120F;
-  color: #ffffff;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.show-password-button:hover {
-  background: #93100b;
-  transform: translateY(-50%) scale(1.05);
-}
   
 .switch-form-text {
     margin-top: 25px;
@@ -143,161 +106,101 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: auto; /* Oppure un'altezza fissa es. 250px se vuoi controllare quanto sale */
-  pointer-events: none; /* Evita che l'utente possa selezionare l'immagine per sbaglio */
+  height: auto;
+  pointer-events: none;
 }
 
-.login-layout {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-
-  /* Contenitore per incolonnare la label e il menù a tendina */
-  .form-gender-dropdown {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Allinea tutto a sinistra */
-    gap: 6px;                /* Piccolo spazio tra la label e il menù */
-  }
-
-  /* Stile del menù a tendina */
-  .form-gender-dropdown select {
-    width: 100%;
-    box-sizing: border-box;
-    padding: clamp(12px, 2vw, 15px);
-    margin-bottom: clamp(15px, 3vw, 20px);
-    border-radius: 10px;
-    border: 3px solid #5B120F;
-    background: #ffffff;
-    color: #2d2d2d;
-    font-size: clamp(0.9rem, 2vw, 1rem);
-    outline: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-
-  .form-gender-dropdown select:focus {
-    border-color: #93100b;
-    box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
-  }
-
-  /* Opzionale: stile della label sopra il menù */
-  .form-gender-dropdown label {
-    font-size: 14px;
-    color: #333;
-  }
-
-  /* --- Profilo: coerente con form-card --- */
-.profile-card {
-    /* riusa .form-card ma con un tocco di separazione interna */
-    gap: 14px;
-  }
-  
-  .profile-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 2px solid #8b5a3c;
-    background: #f5e6d3;
-    display: grid;
-    place-items: center;
-    font-size: 32px;
-    font-weight: 800;
-    color: #8b5a3c;
-    overflow: hidden;
-    margin: 0 auto 6px;
-  }
-  .profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .profile-label {
-    color: #8b5a3c;
-    opacity: 1;
-    font-weight: 500;
-  }
-  
-  .profile-value {
-    font-weight: 600;
-    color: #2d2d2d;
-    word-break: break-word;
-  }
-  
-
-  /* azioni in basso allineate come nelle altre pagine */
-  .profile-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 12px;
-    gap: 10px;
-  }
-.form-button--secondary{
-  background: transparent;
-  border: 1px solid #8b5a3c;
-  color: #8b5a3c;
-}
-.form-button--secondary:hover{
-  background: #f5e6d3;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+/* Contenitore per incolonnare la label e il menù a tendina */
+.form-gender-dropdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.profile-input{
+/* Stile del menù a tendina */
+.form-gender-dropdown select {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: clamp(12px, 2vw, 15px);
+  margin-bottom: clamp(15px, 3vw, 20px);
   border-radius: 10px;
-  border: 1px solid #d4c4b0;
+  border: 3px solid #5B120F;
   background: #ffffff;
   color: #2d2d2d;
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 2vw, 1rem);
   outline: none;
   transition: all 0.2s ease;
-}
-.profile-input:focus{
-  border-color: #8b5a3c;
-  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
-}
-  .profile-card h2,
-.profile-card .form-subtitle {
-  color: #8b5a3c;
+  cursor: pointer;
 }
 
-/* centra la card in pagina */
-.profile-center {
-    min-height: 40dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  
-  /* riquadro interno, eredita font/colore dalla glass card */
-  .classcard {
-    font: inherit;
-    color: inherit;
-    padding: 16px;
-    border-radius: 14px;
-    background: #ffffff;
-    border: 1px solid #d4c4b0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    margin-top: 12px;
-  }
-  
-  /* griglia info + layout righe */
-  .profile-info-grid { 
-    width: 100%;
-    display: grid;
-    gap: 12px;
-    padding: 14px 0;
-    border-top: 1px solid #d4c4b0;
-    border-bottom: 1px solid #d4c4b0;
-  }
-  .profile-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; }
-  .profile-label { opacity: .85; }
-  .profile-value { font-weight: 600; word-break: break-word; }
-  
+.form-gender-dropdown select:focus {
+  border-color: #93100b;
+  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+}
+
+/* --- PATOLOGIE INPUT CONTAINER (usato da Register e Profilo) --- */
+.patologie-input-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.patologie-input-container input {
+  flex: 1;
+  padding: clamp(10px, 2vw, 12px);
+  border-radius: 8px;
+  border: 3px solid #5B120F;
+  background: #ffffff;
+  color: #2d2d2d;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  outline: none;
+  transition: all 0.2s ease;
+  margin-bottom: 0;
+}
+
+.patologie-input-container input:focus {
+  border-color: #93100b;
+  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+}
+
+.patologie-add-button {
+  padding: clamp(10px, 2vw, 12px) clamp(14px, 3vw, 18px);
+  border-radius: 8px;
+  background-color: #5B120F;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.patologie-add-button:hover {
+  background-color: #93100b;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* --- COLORE ARIU SELECT - OPZIONI COLORATE (usato da Register e Profilo) --- */
+#colore_ariu option[value="beige"] {
+  background-color: #f5e6d3;
+  color: #2d2d2d;
+}
+
+#colore_ariu option[value="verde"] {
+  background-color: #4CAF50;
+  color: #ffffff;
+}
+
+#colore_ariu option[value="blu"] {
+  background-color: #2196F3;
+  color: #ffffff;
+}
+
+#colore_ariu option[value="nero"] {
+  background-color: #000000;
+  color: #ffffff;
+}

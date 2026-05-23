@@ -6,7 +6,7 @@ import './GlobalHeader.css';
 const GlobalHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { backgroundColor } = useColor();
+  const { backgroundColor, resetColor } = useColor();
   const isAuthenticated = localStorage.getItem('token') !== null;
   const hideHeader = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/welcome';
   const showAuthButtons = location.pathname !== '/login' && location.pathname !== '/register';
@@ -47,6 +47,7 @@ const GlobalHeader = () => {
   };
   
   const logout = () => {
+    resetColor();
     localStorage.clear();
     navigate('/welcome');
   };

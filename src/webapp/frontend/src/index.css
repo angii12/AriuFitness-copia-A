@@ -7,6 +7,7 @@
   --text-color: #2d2d2d;
   --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
+  --page-bg-color: #5B120F;
   /*--background-main: #f5e6d3;
   --card-bg: #ffffff;
   --border-light: #d4c4b0;*/
@@ -29,7 +30,7 @@ body {
   font-family: 'Poppins', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #5B120F;
+  background: var(--page-bg-color);
   color: #2d2d2d;
 }
 
@@ -144,10 +145,6 @@ button:focus-visible {
     transform: translateY(0);
   }
 }
-
-/*.page-content {
-  padding-top: 80px;  Deve essere circa l'altezza del tuo header 
-}*/
 
 #root, .page-content {
   height: 100%;
