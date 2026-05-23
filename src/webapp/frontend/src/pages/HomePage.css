@@ -24,14 +24,11 @@
   gap: 25px;
 }
 
-
 .panels-grid {
-  position: relative;
-  margin-top: 40px;
-  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex-direction: column; /* Forza i pannelli a impilarsi l'uno sull'altro su mobile */
+  align-items: stretch;
+  gap: 24px;
 }
 
 /* Stile dei Glass Panel */
@@ -50,6 +47,91 @@
   min-height: 380px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
+  position: relative; /* Necessario per il posizionamento dello sfondo */
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Stile base del cassetto (Chiuso) */
+.panel-drawer {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(0, 0, 0, 0.45); /* Sfondo leggermente scuro per staccare dal resto della card */
+  backdrop-filter: blur(12px);
+  border-radius: inherit; /* Mantiene i bordi arrotondati della card */
+  -webkit-backdrop-filter: blur(12px);
+  padding: 20px 30px 30px 30px;
+}
+
+/* Contenitore interno della lista con scrollbar */
+.drawer-list {
+  max-height: 165px; 
+  overflow-y: auto;  
+  padding-right: 8px; 
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Personalizzazione scrollbar Webkit */
+.drawer-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.drawer-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawer-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.drawer-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Stato del cassetto quando la card viene APERTA */
+.glass-panel.panel-expanded .panel-drawer {
+  max-height: 400px;
+  opacity: 1;
+  transform: translateY(0);
+  padding: 20px 30px 30px 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: inherit;
+}
+
+/* Lista degli allenamenti dentro il cassetto */
+.workout-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-item {
+  color: #000000;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.workout-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Stili bottoni attivi */
+.panel-button.active,
+.panel-button.button-active {
+  background-color: #ffffff;
+  color: #000000;
 }
 
 /* --- IL VERO BACKGROUND CON OPACITÀ ISOLATA --- */
@@ -60,16 +142,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  
-  /* Recupera l'immagine passata da React */
   background-image: var(--bg-image); 
   background-size: cover;
   background-position: center;
-  
-  /* Mantiene lo sfondo dietro ai testi */
   z-index: 0; 
-
-  /* Maschera sfumata: rende l'immagine opaca (0.25) in alto e nitida (1) in basso */
   -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 1) 70%);
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 1) 70%);
 }
@@ -104,7 +180,7 @@
   background-color: #ffffff;
   color: #000000;
   text-decoration: none;
-  text-align-last: center;
+  text-align: center;
   padding: 12px 35px;
   border-radius: 50px;
   font-weight: 600;
@@ -124,30 +200,24 @@
 
 /* --- STRUTTURA PER COMPUTER (Desktop / Tablet grandi) --- */
 @media (min-width: 768px) {
-  .page-content {
-    margin-top: 0px; /* Spazio per la navbar fissa */
-  }
-
   .home-wrapper {
     max-width: 1200px; /* Allarghiamo il contenitore su PC */
     padding: 20px;
   }
 
-
   .panels-grid {
     position: relative;
     margin-top: 80px;
-    flex-direction: row;
-    flex-wrap: wrap; /* Permette ai pannelli di andare a capo */
-    justify-content: center; /* Centra l'ultima riga da 2 pannelli */
-    gap: 30px; /* Più spazio tra i pannelli su desktop */
+    flex-direction: row; /* Torna in orizzontale su PC */
+    flex-wrap: wrap; /* Permette ai pannelli di andare a capo se sono molti */
+    justify-content: center; /* Centra i pannelli */
+    gap: 30px; 
   }
 
   .glass-panel {
-    /* Calcolo per avere 3 colonne precise togliendo lo spazio del gap */
-    width: calc(33.333% - 20px); 
-    min-width: 300px; /* Impedisce che diventino troppo stretti */
-    min-height: 420px; /* Più respiro verticale su desktop */
+    width: calc(33.333% - 20px); /* 3 colonne precise */
+    min-width: 300px; 
+    min-height: 420px; 
     padding: 30px;
   }
 }

@@ -61,6 +61,37 @@ function isAdultIsoDate(iso) {
   return date <= adultCutoff;
 }
 
+// Funzioni di formattazione per la visualizzazione
+function formatGenere(value) {
+  const map = { 'M': 'Maschio', 'F': 'Femmina', 'Altro': 'Altro' };
+  return map[value] || value;
+}
+
+function formatColoreAriu(value) {
+  const map = {
+    'beige': 'Beige',
+    'verde': 'Verde',
+    'blu': 'Blu',
+    'nero': 'Nero'
+  };
+  return map[value] || value;
+}
+
+function formatTempo(value) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatTrainer(value) {
+  const map = {
+    'm_giovane': 'Maschio Giovane',
+    'f_giovane': 'Femmina Giovane',
+    'm_adulto': 'Maschio Adulto',
+    'f_adulta': 'Femmina Adulta'
+  };
+  return map[value] || value;
+}
+
 function Row({ label, value }) {
   if (!value) return null; // non mostrare la riga se il campo manca
   return (
@@ -357,7 +388,7 @@ export default function Profilo() {
                 </span>
               </div>
             ) : (
-              <Row label="Genere" value={genere} />
+              <Row label="Genere" value={formatGenere(genere)} />
             )}
 
             {isEditing ? (
@@ -379,7 +410,7 @@ export default function Profilo() {
                 </span>
               </div>
             ) : (
-              <Row label="Colore dell'Ariu" value={coloreAriu} />
+              <Row label="Colore dell'Ariu" value={formatColoreAriu(coloreAriu)} />
             )}
 
             {isEditing ? (
@@ -401,7 +432,7 @@ export default function Profilo() {
                 </span>
               </div>
             ) : (
-              <Row label="Trainer" value={trainer} />
+              <Row label="Trainer" value={formatTrainer(trainer)} />
             )}
 
             {isEditing ? (
@@ -425,7 +456,7 @@ export default function Profilo() {
                 </span>
               </div>
             ) : (
-              <Row label="Tempo di allenamento" value={tempo} />
+              <Row label="Tempo di allenamento" value={formatTempo(tempo)} />
             )}
 
             {isEditing ? (
