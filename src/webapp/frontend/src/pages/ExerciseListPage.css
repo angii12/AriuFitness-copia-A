@@ -132,7 +132,7 @@
     align-items: center;
     margin-bottom: 8px;
   }
-  .exercise-item {
+  /*.exercise-item {
     display: block;
     width: 100%;
     padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
@@ -146,18 +146,14 @@
     border: 1px solid #d4c4b0;
     font-weight: 500;
     font-size: clamp(0.9rem, 2vw, 1rem);
-  }
-  .exercise-item:hover {
-    background: #f5e6d3;
-    border-color: #8b5a3c;
-    transform: translateX(5px);
-  }
-  .exercise-item.active-exercise {
+  }*/
+  
+  /*.exercise-item.active-exercise {
     background: #8b5a3c;
     color: #ffffff;
     font-weight: 600;
     border-color: #6b4630;
-  }
+  }*/
 
   /* Lista esercizi aggiunti*/
   .added-exercises {  margin-top: 16px;  }

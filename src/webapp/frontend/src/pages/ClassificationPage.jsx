@@ -4,6 +4,8 @@ import { Pose, POSE_CONNECTIONS } from "@mediapipe/pose";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { Camera } from "@mediapipe/camera_utils";
 import { supabase } from '../SupabaseClient';
+import { useColor } from '../context/ColorContext';
+
 import '../Dashboard.css';
 import './ClassificationPage.css';
 
@@ -34,6 +36,7 @@ function ClassificationPage() {
   const [exerciseStartTime, setExerciseStartTime] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [currentExerciseStarted, setCurrentExerciseStarted] = useState(false);
+  const [isExerciseFinished, setIsExerciseFinished] = useState(false);
 
   const videoRef = useRef(null);
 
@@ -44,6 +47,8 @@ function ClassificationPage() {
 
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
+
+  const { backgroundColor } = useColor();
 
   useEffect(() => {
     isCountingActiveRef.current = isCountingActive;
@@ -127,24 +132,33 @@ function ClassificationPage() {
 
   /*effetto per caricare gli esercizi selezionati dalla navigazione o da localStorage al montaggio del componente o quando cambia location.state*/
   useEffect(() => {
-    const fromNav = location?.state?.selectedExercises;
+    const fromNav = location?.state?.allenamentiSelezionati;
     if (Array.isArray(fromNav) && fromNav.length > 0) {
-      setSelectedExercises(fromNav);
+      // Se sono stringhe, le trasformiamo in oggetti
+      const normalizedNav = fromNav.map((item, index) => 
+        typeof item === 'string' ? { id: index + 1, nome: item, video_tut_url: null } : item
+      );
+      setSelectedExercises(normalizedNav);
       setCurrentExerciseIndex(0);
       setSelectedExercise(null);
       return;
     }
 
     try {
-      const raw = localStorage.getItem('selectedExercises');
+      const raw = localStorage.getItem('allenamentiSelezionati');
       const parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed)) {
-        setSelectedExercises(parsed);
+        // Se sono stringhe, le trasformiamo in oggetti
+        const normalized = parsed.map((item, index) => 
+          typeof item === 'string' ? { id: index + 1, nome: item, video_tut_url: 'wall-sit-with-medicine-ball-rotation.mp4' } : item
+        );
+        setSelectedExercises(normalized);
+        console.log('Esercizi caricati da localStorage:', normalized);
         setCurrentExerciseIndex(0);
         setSelectedExercise(null);
       }
     } catch (e) {
-      console.warn('selectedExercises non valido in localStorage', e);
+      console.warn('allenamentiSelezionati non valido in localStorage', e);
       setSelectedExercises([]);
     }
   }, [location?.state]);
@@ -234,6 +248,7 @@ function ClassificationPage() {
 
     advanceAfterExerciseFeedback();
   };
+  
 
   /*funzione chiamata quando l'utente conferma di voler continuare dopo aver dato un feedback difficile, 
   chiude il pop-up e avanza al prossimo esercizio, se invece l'utente decide di non continuare chiude il 
@@ -316,7 +331,7 @@ function ClassificationPage() {
     setIsWorkoutFeedbackModalVisible(false);
     
     // Controlla se c'è un esercizio in corso non tracciato
-    let exercisesToSave = [...completedExercises];
+    /*let exercisesToSave = [...completedExercises];
     if (selectedExercise && currentExerciseIndex < selectedExercises.length) {
       // Verifica se questo esercizio è già stato tracciato
       const alreadyTracked = completedExercises.some(ex => ex.exercise_id === selectedExercise.id);
@@ -360,7 +375,7 @@ function ClassificationPage() {
     } else {
       console.warn('Errore nel salvataggio del workout, ma comunque reindirizzando...');
     }
-    
+    */
     // Spegni la webcam e altre pulizie se necessario
     stopWebcam();
     
@@ -473,6 +488,7 @@ function ClassificationPage() {
     setIsCompletedVisible(true);
     setIsCountingActive(false);
     setCountdown(null);
+    setIsExerciseFinished(true);
 
     if (tutorialVideoRef.current) {
       try {
@@ -502,6 +518,7 @@ function ClassificationPage() {
     if (exercise && exercise.id && exercise.nome) {
       setSelectedExercise(exercise);
       setCurrentExerciseStarted(false);
+      setIsExerciseFinished(false);
       // Carica il video tutorial dall'oggetto esercizio
       if (exercise.video_tut_url) {
         setSelectedTutorial(exercise.video_tut_url);
@@ -522,7 +539,7 @@ function ClassificationPage() {
   // --- JSX RENDER ---
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" style={{ '--colorvar': backgroundColor }}>
       {/* Sezione superiore fissa */}
       <div className="main-view-grid">
         {/* Pannello Webcam */}
@@ -537,6 +554,13 @@ function ClassificationPage() {
                 </div>
                 <div className="exercise-target">
                   Target: {currentTargetReps} ripetizioni
+                </div>
+                <div className= "info-card-title">
+                  {selectedExercise && (isStartLocked || countdown !== null || isCountingActive) ? (
+                  <span>
+                    Ancora {remainingReps}
+                  </span>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -586,11 +610,7 @@ function ClassificationPage() {
                 Complimenti!
               </div>
             )}
-            {!isWebcamActive && webcamWarningMessage && (
-              <div className="webcam-warning" >
-                {webcamWarningMessage}
-              </div>
-            )}
+            
           </div>
         </div>
 
@@ -611,18 +631,10 @@ function ClassificationPage() {
 
         {/* Pannello Ripetizioni */}
         <div id="reps-panel" className="info-card glass-card">
-          <div className="info-card-header">
-            <div className= "info-card-title">
-              <h3>RIPETIZIONI</h3>
-              {selectedExercise && (isStartLocked || countdown !== null || isCountingActive) ? (
-                <span>
-                  Ancora {remainingReps}
-                </span>
-              ) : null}
-            </div>
-           
+          <div>
+            <h3>Strumento da usare:</h3> <span>palla 25/35/45 cm</span>
+            <h3>Descrizione:</h3><p>descrizione dell'esercizio</p>
           </div>
-          <p className="big-text">{reps}</p>
           <div className='reps-buttons' >
             <button
               type="button"
@@ -663,7 +675,7 @@ function ClassificationPage() {
         <ul className="exercise-list">
           {selectedExercises.map((item, index) => (
             <button
-              key={item.id}
+              key={index}
               className={selectedExercise?.id === item.id ? 'exercise-item active-exercise' : 'exercise-item'}
               onClick={() => handleExerciseSelect(item)}
               disabled={index !== currentExerciseIndex || countdown !== null || isCountingActive}
@@ -685,8 +697,17 @@ function ClassificationPage() {
         {selectedExercise && (
           <div className="action-buttons-container">
             {currentExerciseIndex < selectedExercises.length - 1 && (
-              <button className="finish-exercise-button" onClick={() => setIsFeedbackModalVisible(true)}>
-                Prossimo Esercizio
+              <button className="finish-exercise-button" onClick={() => {
+                if (isExerciseFinished) {
+                  // Si attiva solo se l'esercizio è finito ("Prossimo Esercizio")
+                  setIsFeedbackModalVisible(true);
+                } else {
+                  // Qui gestisci cosa succede quando c'è scritto "Salta Esercizio"
+                  // Ad esempio, puoi passare direttamente all'esercizio successivo senza mostrare il modale
+                  advanceToNextExercise(); 
+                }
+              }}>
+                {isExerciseFinished ? 'Prossimo Esercizio' : 'Salta Esercizio'}
               </button>
             )}
             <button className="finish-workout-button" onClick={() => setIsWorkoutFeedbackModalVisible(true)}>
@@ -730,7 +751,7 @@ function ClassificationPage() {
           <div className="glass-card modal-content">
             <h3>Sei sicuro di riuscire a continuare?</h3>
             <div className="continue-buttons">
-              <button className="form-button" onClick={handleContinueAfterDifficultYes}>
+              <button className="continue-button" onClick={handleContinueAfterDifficultYes}>
                 Si, posso continuare
               </button>
               <button className="finish-workout-button" onClick={handleContinueAfterDifficultNo}>
@@ -744,7 +765,7 @@ function ClassificationPage() {
       {countdown !== null && (
         <div className="countdown-overlay">
           <p className="countdown-text">Il tuo esercizio inizia tra</p>
-          <div className="countdown-number">{countdown > 0 ? countdown : 'VIA!'}</div>
+          <div className="countdown-number">{countdown}</div>
         </div>
       )}
     </div>

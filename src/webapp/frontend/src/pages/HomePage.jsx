@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useColor } from '../context/ColorContext';
 import './HomePage.css';
 import { supabase } from '../SupabaseClient';
@@ -13,6 +13,8 @@ function HomePage() {
   // --- STATO PER L'ETÀ DELL'UTENTE ---
   const [eta, setEta] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   const programmi = [
     { 
@@ -109,6 +111,23 @@ function HomePage() {
     setActiveCardId(prevId => prevId === id ? null : id);
   };
 
+  // --- FUNZIONE PER SALVARE GLI ESERCIZI NEL LOCAL STORAGE ---
+  const handleStartWorkout = (allenamenti, titoloProgramma) => {
+    try {
+      // Salviamo l'array degli esercizi trasformandolo in stringa
+      localStorage.setItem('allenamentiSelezionati', JSON.stringify(allenamenti));
+      
+      // Opzionale: puoi salvare anche il titolo del programma se ti serve nella pagina successiva
+      localStorage.setItem('programmaAttivo', titoloProgramma);
+      
+      console.log(`Allenamento "${titoloProgramma}" avviato e salvato nel localStorage!`);
+
+      navigate('/allenamento');
+    } catch (error) {
+      console.error("Errore nel salvataggio in localStorage:", error);
+    }
+  };
+
   return (
     <div className="home-container" style={{ backgroundColor, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23CCCCCC' fill-opacity='0.1'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}>
       
@@ -144,13 +163,20 @@ function HomePage() {
               </div>
 
               {/* Bottone in fondo full-width */}
+              <div className="bttn-container">
               <button 
                 className={`panel-button ${isOpen ? 'active' : ''}`}
                 onClick={() => toggleDrawer(prog.id)}
               >
                 {isOpen ? 'Chiudi' : 'View'}
               </button>
-
+              <button 
+                  className="panel-button"
+                  onClick={() => handleStartWorkout(prog.allenamenti, prog.titolo)}
+                >
+                  Start
+                </button>
+              </div>
             </div>
           );
         })}
