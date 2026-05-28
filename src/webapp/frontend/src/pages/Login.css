@@ -1,0 +1,10 @@
+/* === LOGIN.CSS ===
+   Styling specifici per la pagina di login
+*/
+
+.login-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}

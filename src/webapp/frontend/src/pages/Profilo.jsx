@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../SupabaseClient';
-import './Form.css'; // riuso stile esistente (form-page-container, form-card, form-button, ...)
+import { useColor } from '../context/ColorContext';
+import './Form.css';
+import './Profilo.css';
 
 function getInitials(user) {
   const name = (user?.nome || user?.first_name || user?.name || '').trim();
@@ -59,6 +61,37 @@ function isAdultIsoDate(iso) {
   return date <= adultCutoff;
 }
 
+// Funzioni di formattazione per la visualizzazione
+function formatGenere(value) {
+  const map = { 'M': 'Maschio', 'F': 'Femmina', 'Altro': 'Altro' };
+  return map[value] || value;
+}
+
+function formatColoreAriu(value) {
+  const map = {
+    'beige': 'Beige',
+    'verde': 'Verde',
+    'blu': 'Blu',
+    'nero': 'Nero'
+  };
+  return map[value] || value;
+}
+
+function formatTempo(value) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatTrainer(value) {
+  const map = {
+    'm_giovane': 'Maschio Giovane',
+    'f_giovane': 'Femmina Giovane',
+    'm_adulto': 'Maschio Adulto',
+    'f_adulta': 'Femmina Adulta'
+  };
+  return map[value] || value;
+}
+
 function Row({ label, value }) {
   if (!value) return null; // non mostrare la riga se il campo manca
   return (
@@ -70,6 +103,7 @@ function Row({ label, value }) {
 }
 
 export default function Profilo() {
+  const { backgroundColor } = useColor();
   const navigate = useNavigate();
   const token = useMemo(() => localStorage.getItem('token'), []);
   const userEmail = useMemo(() => {
@@ -87,6 +121,12 @@ export default function Profilo() {
   const [editNome, setEditNome] = useState('');
   const [editCognome, setEditCognome] = useState('');
   const [editDobIso, setEditDobIso] = useState('');
+  const [editGenere, setEditGenere] = useState('');
+  const [editColoreAriu, setEditColoreAriu] = useState('');
+  const [editTrainer, setEditTrainer] = useState('');
+  const [editPatologie, setEditPatologie] = useState([]);
+  const [editTempPatologia, setEditTempPatologia] = useState('');
+  const [editTempo, setEditTempo] = useState('');
   const [editError, setEditError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -103,7 +143,7 @@ export default function Profilo() {
         setLoading(true);
         const { data, error } = await supabase
           .from('profili')
-          .select('email, nome, cognome, data_nascita')
+          .select('email, nome, cognome, data_nascita, genere, colore_ariu, trainer, patologie, tempo')
           .eq('email', userEmail)
           .single();
 
@@ -114,6 +154,11 @@ export default function Profilo() {
         setEditNome(data?.nome || '');
         setEditCognome(data?.cognome || '');
         setEditDobIso(toIsoDate(data?.data_nascita || ''));
+        setEditGenere(data?.genere || '');
+        setEditColoreAriu(data?.colore_ariu || '');
+        setEditTrainer(data?.trainer || '');
+        setEditPatologie(data?.patologie || []);
+        setEditTempo(data?.tempo || '');
         setLoadError(null);
       } catch (err) {
         console.error('Errore nel caricamento del profilo:', err);
@@ -161,18 +206,40 @@ export default function Profilo() {
   const cognome = userProfileData?.cognome || '';
   const dataNascita = safeDate(userProfileData?.data_nascita || '');
   const email = userProfileData?.email || '';
+  const genere = userProfileData?.genere || '';
+  const coloreAriu = userProfileData?.colore_ariu || '';
+  const trainer = userProfileData?.trainer || '';
+  const patologie = userProfileData?.patologie || [];
+  const tempo = userProfileData?.tempo || '';
 
   const handleStartEdit = () => {
     setEditError('');
     setEditNome(userProfileData?.nome || '');
     setEditCognome(userProfileData?.cognome || '');
     setEditDobIso(toIsoDate(userProfileData?.data_nascita || ''));
+    setEditGenere(userProfileData?.genere || '');
+    setEditColoreAriu(userProfileData?.colore_ariu || '');
+    setEditTrainer(userProfileData?.trainer || '');
+    setEditPatologie(userProfileData?.patologie || []);
+    setEditTempPatologia('');
+    setEditTempo(userProfileData?.tempo || '');
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setEditError('');
     setIsEditing(false);
+  };
+
+  const handleAggiungiPatologia = () => {
+    if (editTempPatologia.trim()) {
+      setEditPatologie([...editPatologie, editTempPatologia.trim()]);
+      setEditTempPatologia('');
+    }
+  };
+
+  const handleRimuoviPatologia = (index) => {
+    setEditPatologie(editPatologie.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -184,6 +251,10 @@ export default function Profilo() {
     if (!cognomeTrim) return setEditError('Inserisci il cognome.');
     if (!dobIso) return setEditError('Inserisci la data di nascita.');
     if (!isAdultIsoDate(dobIso)) return setEditError('Devi essere maggiorenne (almeno 18 anni).');
+    if (!editGenere) return setEditError('Seleziona il genere.');
+    if (!editColoreAriu) return setEditError('Seleziona il colore dell\'Ariu.');
+    if (!editTrainer) return setEditError('Seleziona il trainer.');
+    if (!editTempo) return setEditError('Seleziona il tempo di allenamento.');
 
     try {
       setIsSaving(true);
@@ -196,6 +267,11 @@ export default function Profilo() {
           nome: nomeTrim,
           cognome: cognomeTrim,
           data_nascita: dobIso,
+          genere: editGenere,
+          colore_ariu: editColoreAriu,
+          trainer: editTrainer,
+          patologie: editPatologie,
+          tempo: editTempo
         })
         .eq('email', email);
 
@@ -207,6 +283,11 @@ export default function Profilo() {
         nome: nomeTrim,
         cognome: cognomeTrim,
         data_nascita: dobIso,
+        genere: editGenere,
+        colore_ariu: editColoreAriu,
+        trainer: editTrainer,
+        patologie: editPatologie,
+        tempo: editTempo
       });
 
       setIsEditing(false);
@@ -288,6 +369,138 @@ export default function Profilo() {
               <Row label="Data di nascita" value={dataNascita} />
             )}
             <Row label="Email" value={email} />
+
+            {isEditing ? (
+              <div className="profile-row">
+                <span className="profile-label">Genere</span>
+                <span className="profile-value">
+                  <select
+                    className="profile-input"
+                    value={editGenere}
+                    onChange={(e) => setEditGenere(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled hidden>Seleziona genere</option>
+                    <option value="M">Maschio</option>
+                    <option value="F">Femmina</option>
+                    <option value="Altro">Altro</option>
+                  </select>
+                </span>
+              </div>
+            ) : (
+              <Row label="Genere" value={formatGenere(genere)} />
+            )}
+
+            {isEditing ? (
+              <div className="profile-row">
+                <span className="profile-label">Colore dell'Ariu</span>
+                <span className="profile-value">
+                  <select
+                    className="profile-input"
+                    value={editColoreAriu}
+                    onChange={(e) => setEditColoreAriu(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled hidden>Seleziona colore</option>
+                    <option value="beige">Beige</option>
+                    <option value="verde">Verde</option>
+                    <option value="blu">Blu</option>
+                    <option value="nero">Nero</option>
+                  </select>
+                </span>
+              </div>
+            ) : (
+              <Row label="Colore dell'Ariu" value={formatColoreAriu(coloreAriu)} />
+            )}
+
+            {isEditing ? (
+              <div className="profile-row">
+                <span className="profile-label">Trainer</span>
+                <span className="profile-value">
+                  <select
+                    className="profile-input"
+                    value={editTrainer}
+                    onChange={(e) => setEditTrainer(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled hidden>Seleziona trainer</option>
+                    <option value="m_giovane">Giovane maschio</option>
+                    <option value="f_giovane">Giovane femmina</option>
+                    <option value="m_adulto">Adulto maschio</option>
+                    <option value="f_adulta">Adulto femmina</option>
+                  </select>
+                </span>
+              </div>
+            ) : (
+              <Row label="Trainer" value={formatTrainer(trainer)} />
+            )}
+
+            {isEditing ? (
+              <div className="profile-row" style={{ gridColumn: '1 / -1', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span className="profile-label">Tempo di allenamento</span>
+                <span className="profile-value" style={{ width: '100%' }}>
+                  <select
+                    className="profile-input"
+                    value={editTempo}
+                    onChange={(e) => setEditTempo(e.target.value)}
+                    required
+                    style={{ width: '100%' }}
+                  >
+                    <option value="" disabled hidden>Seleziona frequenza</option>
+                    <option value="occasionalmente">Occasionalmente</option>
+                    <option value="1 volta a settimana">1 volta a settimana</option>
+                    <option value="2-3 volte a settimana">2-3 volte a settimana</option>
+                    <option value="4-5 volte a settimana">4-5 volte a settimana</option>
+                    <option value="ogni giorno">Ogni giorno</option>
+                  </select>
+                </span>
+              </div>
+            ) : (
+              <Row label="Tempo di allenamento" value={formatTempo(tempo)} />
+            )}
+
+            {isEditing ? (
+              <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span className="profile-label">Patologie</span>
+                <div className="patologie-input-container">
+                  <input
+                    type="text"
+                    value={editTempPatologia}
+                    onChange={(e) => setEditTempPatologia(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAggiungiPatologia()}
+                    placeholder="Inserisci una patologia"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAggiungiPatologia}
+                    className="patologie-add-button"
+                  >
+                    Aggiungi
+                  </button>
+                </div>
+                {editPatologie.length > 0 && (
+                  <div>
+                    <p style={{ margin: '5px 0', fontWeight: '600', fontSize: 'clamp(0.9rem, 2vw, 1rem)' }}>Patologie inserite:</p>
+                    {editPatologie.map((patologia, index) => (
+                      <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', backgroundColor: '#f5e6d3', borderRadius: '8px', marginBottom: '8px', border: '1px solid #d4c4b0' }}>
+                        <span style={{ color: '#2d2d2d', fontWeight: '500' }}>{patologia}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRimuoviPatologia(index)}
+                          style={{ padding: '6px 14px', backgroundColor: '#c1121f', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: 'clamp(0.8rem, 2vw, 0.9rem)', fontWeight: '600', transition: 'all 0.2s ease' }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#a00d1a'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = '#c1121f'}
+                        >
+                          Rimuovi
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Row label="Patologie" value={patologie.length > 0 ? patologie.join(', ') : '-'} />
+            )}
           </div>
 
           {isEditing && editError ? <p className="error-message">{editError}</p> : null}

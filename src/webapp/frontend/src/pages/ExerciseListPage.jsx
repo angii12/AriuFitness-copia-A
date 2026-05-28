@@ -104,7 +104,13 @@ function ExerciseListPage() {
       <div className="glass-card page-card">
         <header className="page-header">
           <h1>Galleria Esercizi</h1>
-          
+          <button 
+            type="button"
+            onClick={() => navigate('/cronologia')}
+            className="chronology-button"
+          >
+            Cronologia
+          </button>
         </header>
         {loading ? (
           <div className='loading'>

@@ -11,9 +11,7 @@
   /* Stile per il bottone "Torna alla Home" */
   .back-button {
     padding: clamp(8px, 2vw, 10px) clamp(15px, 3vw, 20px);
-    background-color: #ffffff;
-    color: #8b5a3c;
-    border: 1px solid #ffffff;
+    color: #ffffff;
     border-radius: 10px;
     text-decoration: none;
     font-weight: 600;
@@ -24,8 +22,7 @@
   }
   
   .back-button:hover {
-    background-color: #f5e6d3;
-    color: #8b5a3c;
+    color: #ffffff;
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   }
@@ -43,17 +40,17 @@
   background: #ffffff;
   display: grid;
   place-items: center;
-  color: #8b5a3c;
+  color: #5B120F;
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;
   transition: all 0.2s ease;
 }
-.avatar-btn:hover { background: #f5e6d3; }
-.avatar-btn img {
+.avatar-btn:hover { background: #93100b; }
+.avatar-btn img,
+.avatar-btn svg {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   border-radius: 50%;
   position: absolute;
 }
@@ -76,7 +73,6 @@
   min-width: clamp(200px, 80vw, 240px);
   padding: clamp(8px, 1.5vw, 10px);
   background: #ffffff;
-  border: 1px solid #d4c4b0;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   z-index: 50;
@@ -87,9 +83,9 @@
 .profile-row { display: flex; align-items: center; gap: 10px; }
 .profile-info { display: flex; flex-direction: column; }
 .profile-name { color: #2d2d2d; font-weight: 600; line-height: 1.2; font-size: clamp(0.9rem, 2vw, 1rem); }
-.profile-email { color: #8b5a3c; font-size: clamp(0.8rem, 1.5vw, 0.9rem); }
+.profile-email { color: #5B120F; font-size: clamp(0.8rem, 1.5vw, 0.9rem); }
 
-.menu-divider { height: 1px; background: #d4c4b0; margin: clamp(8px, 1.5vw, 10px) 0; }
+.menu-divider { height: 1px; background: #93100b; margin: clamp(8px, 1.5vw, 10px) 0; }
 .menu-item {
   width: 100%;
   text-align: left;
@@ -104,7 +100,7 @@
   font-size: clamp(0.85rem, 1.8vw, 1rem);
   transition: all 0.2s ease;
 }
-.menu-item:hover { background: #f5e6d3; color: #8b5a3c; }
+.menu-item:hover { background: #c1121f; color: #5B120F; }
 .menu-item.danger { color: #c1121f; }
 
 /* --- Menu profilo: allineamento e spaziature --- */
@@ -115,10 +111,19 @@
   min-width: 260px;
   padding: 12px;
   background: #ffffff;
-  border: 1px solid #d4c4b0;
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.1);
   z-index: 50;
+}
+
+@media (max-width: 480px) {
+  .gh-menu {
+    position: absolute;
+    left: 180%;
+    transform: translateX(-50%); /* Lo centra matematicamente rispetto all'icona */
+    top: calc(100% + 8px);
+    min-width: 260px;
+   }
 }
 
 .gh-user-row {
@@ -141,14 +146,14 @@
 }
 
 .gh-email {
-  color: #8b5a3c;
+  color: #5B120F;
   font-size: 0.9rem;
   margin-top: 2px;
 }
 
 .gh-divider {
   height: 1px;
-  background: #d4c4b0;
+  background: #c1121f;
   margin: 12px 0;
 }
 
@@ -157,9 +162,8 @@
   text-align: left;
   padding: 10px 20px;
   border-radius: 12px;
-  background: #f5e6d3;
-  border: 1px solid #d4c4b0;
-  color: #8b5a3c;
+  background: #5B120F;
+  color: #ffffff;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -168,8 +172,8 @@
 }
 
 .menu-btn:hover {
-  background: #e8d5c0;
-  border-color: #8b5a3c;
+  background: #93100b;
+  border-color: #5B120F;
 }
 
 /* --- Logout evidenziato in rosso --- */

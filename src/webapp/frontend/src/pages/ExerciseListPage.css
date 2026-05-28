@@ -36,6 +36,30 @@
     font-size: clamp(1.4rem, 5vw, 1.8rem);
     color: #8b5a3c;
   }
+
+  .chronology-button {
+    padding: clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px);
+    background-color: #8b5a3c;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(139, 90, 60, 0.2);
+    white-space: nowrap;
+  }
+
+  .chronology-button:hover {
+    background-color: #6b4428;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 90, 60, 0.3);
+  }
+
+  .chronology-button:active {
+    transform: translateY(0);
+  }
   
   /* Layout a due colonne che non si deforma */
   .content-layout {
@@ -108,7 +132,7 @@
     align-items: center;
     margin-bottom: 8px;
   }
-  .exercise-item {
+  /*.exercise-item {
     display: block;
     width: 100%;
     padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
@@ -122,18 +146,14 @@
     border: 1px solid #d4c4b0;
     font-weight: 500;
     font-size: clamp(0.9rem, 2vw, 1rem);
-  }
-  .exercise-item:hover {
-    background: #f5e6d3;
-    border-color: #8b5a3c;
-    transform: translateX(5px);
-  }
-  .exercise-item.active-exercise {
+  }*/
+  
+  /*.exercise-item.active-exercise {
     background: #8b5a3c;
     color: #ffffff;
     font-weight: 600;
     border-color: #6b4630;
-  }
+  }*/
 
   /* Lista esercizi aggiunti*/
   .added-exercises {  margin-top: 16px;  }
