@@ -55,7 +55,7 @@ function ClassificationPage() {
   }, [isCountingActive]);
 
   //configurare MediaPipe una volta che il componente è montato
-  useEffect(() => {
+  /*useEffect(() => {
     if (!isWebcamActive || !videoRef.current) return;
 
     const pose = new Pose({
@@ -110,7 +110,7 @@ function ClassificationPage() {
       if (cameraRef.current) cameraRef.current.stop();
       pose.close();
     };
-  }, [isWebcamActive]); // Si riattiva quando accendi la webcam
+  }, [isWebcamActive]); // Si riattiva quando accendi la webcam*/
 
   /*funzione per mettere in pausa il video tutorial*/
   const pauseTutorialVideo = () => {
