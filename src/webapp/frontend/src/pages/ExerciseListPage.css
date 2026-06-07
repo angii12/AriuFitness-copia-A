@@ -36,30 +36,7 @@
     font-size: clamp(1.4rem, 5vw, 1.8rem);
     color: #8b5a3c;
   }
-
-  .chronology-button {
-    padding: clamp(8px, 1.5vw, 10px) clamp(16px, 2.5vw, 20px);
-    background-color: #8b5a3c;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    font-size: clamp(0.85rem, 1.8vw, 0.95rem);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 8px rgba(139, 90, 60, 0.2);
-    white-space: nowrap;
-  }
-
-  .chronology-button:hover {
-    background-color: #6b4428;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 90, 60, 0.3);
-  }
-
-  .chronology-button:active {
-    transform: translateY(0);
-  }
+ 
   
   /* Layout a due colonne che non si deforma */
   .content-layout {
@@ -80,6 +57,7 @@
     .page-card {
       max-height: none;
       height: auto;
+      margin-top: 90px;
     }
     
     .exercise-menu {
@@ -132,28 +110,7 @@
     align-items: center;
     margin-bottom: 8px;
   }
-  /*.exercise-item {
-    display: block;
-    width: 100%;
-    padding: clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px);
-    margin-bottom: clamp(8px, 1.5vw, 10px);
-    border-radius: 10px;
-    background: #ffffff;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    color: #2d2d2d;
-    border: 1px solid #d4c4b0;
-    font-weight: 500;
-    font-size: clamp(0.9rem, 2vw, 1rem);
-  }*/
   
-  /*.exercise-item.active-exercise {
-    background: #8b5a3c;
-    color: #ffffff;
-    font-weight: 600;
-    border-color: #6b4630;
-  }*/
 
   /* Lista esercizi aggiunti*/
   .added-exercises {  margin-top: 16px;  }
@@ -167,7 +124,7 @@
     gap: 10px;
     margin-bottom: 6px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #8b5a3c; }
+    border-bottom: 1px solid #6a6a52; }
   .added-exercises button {
     width: 28px;
     height: 28px;
@@ -186,7 +143,7 @@
   .start-bttn button {
     padding: 10px 14px;
     border-radius: 12px;
-    border: 1px solid #8b5a3c;
+    border: 1px solid #6a6a52;
     background: rgba(255,255,255,0.10);
     color: inherit;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -195,10 +152,11 @@
     cursor: not-allowed;
     opacity: 0.6;
   }
+
   .start-bttn button:not(:disabled):hover {
     transform: translateY(-4px);
-    background: #f5e6d3;
-    border-color: #8b5a3c;
+    background: color-mix(in srgb, rgba(255,255,255,0.15), var(--colorvar));
+    border-color: var(--colorvar);
   }
   
   /* Pannello Video (colonna destra) */
@@ -212,7 +170,7 @@
     height: auto;
     min-height: clamp(250px, 60vh, 600px);
     overflow: hidden;
-    border: 1px solid #d4c4b0;
+    border: 1px solid #9a9e81;
     box-sizing: border-box;
   }
   
@@ -270,6 +228,15 @@
   .info-ball-data { margin: 0; font-size: 15px; font-weight: 600; color: #3b82f6}
 
   .add-exercise-section { display: flex; gap: 8px; }
+
+  .add-button {
+      background: var(--colorvar);
+    }
+
+  .add-button:hover {
+      background: color-mix(in srgb, rgba(255,255,255,0.15), var(--colorvar));
+    }
+
   .description-button {
     width: 50px;
     height: 50px;

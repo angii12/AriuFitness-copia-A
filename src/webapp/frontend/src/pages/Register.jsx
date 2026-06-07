@@ -5,7 +5,7 @@ import './Register.css';
 import { supabase } from '../SupabaseClient'; // Importa il client Supabase
 
 function Register() {
-  const [step, setStep] = useState(1); // Step 1: Registrazione, Step 2: Questionario
+  const [step, setStep] = useState(1); // Step 1: Registrazione, Step 2-5: Questionario (1 domanda per step)
   const [formData, setFormData] = useState({
     nome: '',
     cognome: '',
@@ -25,6 +25,34 @@ function Register() {
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Funzioni di navigazione per il questionario
+  const handleNextQuestion = () => {
+    // Validazione della domanda corrente
+    if (step === 2 && !questionarioData.colore_ariu) {
+      setError('Per favore seleziona un colore.');
+      return;
+    }
+    if (step === 3 && !questionarioData.tempo) {
+      setError('Per favore seleziona un tempo.');
+      return;
+    }
+    if (step === 4) {
+      // Domanda sulle patologie: può essere saltata (facoltativa)
+    }
+    if (step === 5 && !questionarioData.trainer) {
+      setError('Per favore seleziona un trainer.');
+      return;
+    }
+    
+    setError('');
+    setStep(step + 1);
+  };
+
+  const handlePreviousQuestion = () => {
+    setError('');
+    setStep(step - 1);
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -121,7 +149,7 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    // Validazione campi obbligatori
+    // Validazione campi obbligatori (solo passo 5, ultimo step)
     if (!questionarioData.colore_ariu || !questionarioData.tempo || !questionarioData.trainer) {
       setError('Per favore compila tutti i campi obbligatori.');
       return;
@@ -197,10 +225,10 @@ function Register() {
                     Hai già un account? <Link to="/login" className="switch-form-link">Accedi</Link>
                     </p>
                   </>
-                ) : (
+                ) : step === 2 ? (
                   <>
                     <h2>Un'esperienza personalizzata!</h2>
-                    <form onSubmit={handleQuestionarioSubmit}>
+                    <form>
                         <div className="color-picker-label">
                           <label htmlFor="colore_ariu">Di che colore è il tuo divano Ariu?</label>
                           <div className="color-grid">
@@ -222,7 +250,20 @@ function Register() {
                             </label>
                           </div>
                         </div>
-
+                        <div>
+                          <p>Potrai modificare queste informazioni in qualsiasi momento.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+                          <button type="button" className="form-button back-forward" onClick={handlePreviousQuestion}>Indietro</button>
+                          <button type="button" className="form-button back-forward" onClick={handleNextQuestion}>Avanti</button>
+                        </div>
+                    </form>
+                    {error && <p className="error-message">{error}</p>}
+                  </>
+                ) : step === 3 ? (
+                  <>
+                    <h2>Un'esperienza personalizzata!</h2>
+                    <form>
                         <div className="form-gender-dropdown">
                           <label>Quanto tempo pensi di impiegare in media per l'attività fisica?</label>
                           <div className="time-list">
@@ -288,7 +329,17 @@ function Register() {
                             </label>
                           </div>
                         </div>
-
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+                          <button type="button" className="form-button back-forward" onClick={handlePreviousQuestion}>Indietro</button>
+                          <button type="button" className="form-button back-forward" onClick={handleNextQuestion}>Avanti</button>
+                        </div>
+                    </form>
+                    {error && <p className="error-message">{error}</p>}
+                  </>
+                ) : step === 4 ? (
+                  <>
+                    <h2>Un'esperienza personalizzata!</h2>
+                    <form>
                         <div className="form-gender-dropdown">
                           <label htmlFor="patologie">Soffri di particolari patologie?</label>
                           <div className="patologie-input-container">
@@ -327,7 +378,17 @@ function Register() {
                             </div>
                           )}
                         </div>
-
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between'}}>
+                          <button type="button" className="form-button back-forward" onClick={handlePreviousQuestion}>Indietro</button>
+                          <button type="button" className="form-button back-forward" onClick={handleNextQuestion}>Avanti</button>
+                        </div>
+                    </form>
+                    {error && <p className="error-message">{error}</p>}
+                  </>
+                ) : (
+                  <>
+                    <h2>Un'esperienza personalizzata!</h2>
+                    <form onSubmit={handleQuestionarioSubmit}>
                         <div className="form-gender-dropdown">
                           <label>Quale trainer vuoi che ti assista nel tuo percorso?</label>
                           <div className="trainer-grid">
@@ -341,7 +402,8 @@ function Register() {
                                 required 
                                 className="hide-radio"
                               />
-                              <span className="trainer-box">Giovane maschio</span>
+                              <img src="/uomo-giovane.png" alt="Uomo Giovane" className="trainer-image" />
+                              <span className="trainer-box">Uomo Giovane</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -353,7 +415,8 @@ function Register() {
                                 required 
                                 className="hide-radio"
                               />
-                              <span className="trainer-box">Giovane femmina</span>
+                              <img src="/donna-giovane.png" alt="Donna Giovane" className="trainer-image" />
+                              <span className="trainer-box">Donna Giovane</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -365,7 +428,8 @@ function Register() {
                                 required 
                                 className="hide-radio"
                               />
-                              <span className="trainer-box">Adulto maschio</span>
+                              <img src="/uomo-adulto.png" alt="Uomo Adulto" className="trainer-image" />
+                              <span className="trainer-box">Uomo Adulto</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -377,22 +441,20 @@ function Register() {
                                 required 
                                 className="hide-radio"
                               />
-                              <span className="trainer-box">Adulto femmina</span>
+                              <img src="/donna-adulta.png" alt="Donna Adulta" className="trainer-image" />
+                              <span className="trainer-box">Donna Adulta</span>
                             </label>
                           </div>
                         </div>
-                        <div>
-                          <p>Potrai modificare queste informazioni in qualsiasi momento.</p>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+                          <button type="button" className="form-button back-forward" onClick={handlePreviousQuestion}>Indietro</button>
+                          <button type="submit" className="form-button">Completa registrazione</button>
                         </div>
-
-                        <button type="submit" className="form-button">Completa registrazione</button>
                     </form>
                     {error && <p className="error-message">{error}</p>}
                   </>
                 )}
             </div>
-            <svg className="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none"><path fill="#ffffff" fillOpacity="0.3" d="M0,288L17.1,261.3C34.3,235,69,181,103,165.3C137.1,149,171,171,206,160C240,149,274,107,309,117.3C342.9,128,377,192,411,229.3C445.7,267,480,277,514,277.3C548.6,277,583,267,617,250.7C651.4,235,686,213,720,202.7C754.3,192,789,192,823,170.7C857.1,149,891,107,926,117.3C960,128,994,192,1029,197.3C1062.9,203,1097,149,1131,149.3C1165.7,149,1200,203,1234,229.3C1268.6,256,1303,256,1337,234.7C1371.4,213,1406,171,1423,149.3L1440,128L1440,320L1422.9,320C1405.7,320,1371,320,1337,320C1302.9,320,1269,320,1234,320C1200,320,1166,320,1131,320C1097.1,320,1063,320,1029,320C994.3,320,960,320,926,320C891.4,320,857,320,823,320C788.6,320,754,320,720,320C685.7,320,651,320,617,320C582.9,320,549,320,514,320C480,320,446,320,411,320C377.1,320,343,320,309,320C274.3,320,240,320,206,320C171.4,320,137,320,103,320C68.6,320,34,320,17,320L0,320Z"></path></svg>
-            <svg className="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none"><path fill="#ffffff" fillOpacity="0.1" d="M0,0L17.1,32C34.3,64,69,128,103,154.7C137.1,181,171,171,206,160C240,149,274,139,309,160C342.9,181,377,235,411,256C445.7,277,480,267,514,218.7C548.6,171,583,85,617,64C651.4,43,686,85,720,138.7C754.3,192,789,256,823,261.3C857.1,267,891,213,926,176C960,139,994,117,1029,101.3C1062.9,85,1097,75,1131,101.3C1165.7,128,1200,192,1234,218.7C1268.6,245,1303,235,1337,208C1371.4,181,1406,139,1423,117.3L1440,96L1440,320L1422.9,320C1405.7,320,1371,320,1337,320C1302.9,320,1269,320,1234,320C1200,320,1166,320,1131,320C1097.1,320,1063,320,1029,320C994.3,320,960,320,926,320C891.4,320,857,320,823,320C788.6,320,754,320,720,320C685.7,320,651,320,617,320C582.9,320,549,320,514,320C480,320,446,320,411,320C377.1,320,343,320,309,320C274.3,320,240,320,206,320C171.4,320,137,320,103,320C68.6,320,34,320,17,320L0,320Z"></path></svg>
         </div>
     );
 }

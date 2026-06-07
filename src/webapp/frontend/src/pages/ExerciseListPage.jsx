@@ -4,11 +4,13 @@ import './ExerciseListPage.css'; // Creeremo questo file per lo stile
 import { useNavigate } from 'react-router-dom';
 import '../Dashboard.css'; // Per importare lo stile del bottone logout
 import { supabase } from '../SupabaseClient';
+import { useColor } from '../context/ColorContext';
 
 function ExerciseListPage() {
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
   const navigate = useNavigate();
+  const { backgroundColor } = useColor();
   const [selectedCategory, setSelectedCategory] = useState('Tutti');
   const [addedExercises, setAddedExercises] = useState([]);
   const [exercises, setExercises] = useState([]);
@@ -100,17 +102,10 @@ function ExerciseListPage() {
   });
 
   return (
-    <div className="page-container">
+    <div className="page-container" style={{ '--colorvar': backgroundColor }}>
       <div className="glass-card page-card">
         <header className="page-header">
-          <h1>Galleria Esercizi</h1>
-          <button 
-            type="button"
-            onClick={() => navigate('/cronologia')}
-            className="chronology-button"
-          >
-            Cronologia
-          </button>
+          <h1 style={{ color: backgroundColor }}>Galleria Esercizi</h1>
         </header>
         {loading ? (
           <div className='loading'>
@@ -216,6 +211,7 @@ function ExerciseListPage() {
                   )}
                   <div className='add-exercise-section'>
                     <button
+                      className='add-button'
                       type="button"
                       onClick={() => handleAddExercise()}
                       disabled={!selectedExercise || addedExercises.some((ex) => ex.id === selectedExerciseDetails?.id)}
@@ -300,7 +296,7 @@ function ExerciseListPage() {
               </div>
               
               <div style={{ marginBottom: 16 }}>
-                <h3 style={{ margin: '0 0 8px 0', color: '#8b5a3c', fontSize: 14 }}>
+                <h3 style={{ margin: '0 0 8px 0', color: backgroundColor, fontSize: 14 }}>
                   Descrizione
                 </h3>
                 <p style={{ margin: 0, color: '#555', lineHeight: 1.6 }}>
@@ -310,7 +306,7 @@ function ExerciseListPage() {
               
               {selectedExerciseDetails.palla && (
                 <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 8 }}>
-                  <h3 style={{ margin: '0 0 8px 0', color: '#8b5a3c', fontSize: 14 }}>
+                  <h3 style={{ margin: '0 0 8px 0', color: backgroundColor, fontSize: 14 }}>
                     Attrezzo utilizzato
                   </h3>
                   <p style={{ margin: 0, color: '#555', fontWeight: 500 }}>

@@ -59,7 +59,8 @@ const GlobalHeader = () => {
   return (
     <header className="global-header">
       <div className="brand-section">
-        <span className="app-title-global" style={{ color: `color-mix(in srgb, ${backgroundColor}, #000000 35%)` }}>AriuFitness</span>
+        <span className="app-title-global">Ariu</span>
+        <span className="app-title-global second">Fitness</span>
       </div>
 
       {isAuthenticated && (

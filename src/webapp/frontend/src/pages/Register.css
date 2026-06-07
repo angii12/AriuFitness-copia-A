@@ -38,3 +38,26 @@
   background: #93100b;
   transform: translateY(-50%) scale(1.05);
 }
+
+.back-forward {
+  width: 30%;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  padding: clamp(6px, 1.5vw, 10px);
+}
+
+/* Stile dell'immagine del trainer */
+@media (max-width: 480px) {
+  .trainer-image {
+    width: 80px;         /* Regola la larghezza in base alle tue esigenze */
+    height: 80px;        /* Mantieni proporzioni quadrate se necessario */
+    object-fit: cover;    /* Evita che l'immagine si distorca */
+  }
+}
+
+@media (min-width: 481px) {
+.trainer-image {
+  width: 200px;          /* Regola la larghezza in base alle tue esigenze */
+  height: 200px;         /* Mantieni proporzioni quadrate se necessario */
+  object-fit: cover;    /* Evita che l'immagine si distorca */
+}
+}

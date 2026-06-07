@@ -145,7 +145,7 @@ function ClassificationPage() {
     }
 
     try {
-      const raw = localStorage.getItem('allenamentiSelezionati');
+      const raw = localStorage.getItem('selectedExercises');
       const parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed)) {
         // Se sono stringhe, le trasformiamo in oggetti

@@ -207,7 +207,7 @@
   text-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   
   /* Rimuoviamo il box nero e usiamo un'animazione fluida */
-  animation: pulsePop 1.27s cubic-bezier(0.25, 1, 0.5, 1) infinite; 
+  animation: pulsePop 1s cubic-bezier(0.25, 1, 0.5, 1) infinite; 
 }
 
 @keyframes pulsePop {
@@ -307,6 +307,7 @@
 
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
   }
+  
   
   .exercise-item.active-exercise::before {
     content: '▶';

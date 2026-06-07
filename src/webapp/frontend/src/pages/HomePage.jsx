@@ -21,31 +21,82 @@ function HomePage() {
       id: 1, 
       titolo: "TONIFICAZIONE", 
       immagine: "/tonificazione.png",
-      allenamenti: ["Full Body Tonificazione", "Focus Addome & Glutei", "Upper Body Sculpt", "Placeholder", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: ["Crunch con fitball dietro la schiena", "Plank con gomiti sulla fitball", "Plank con gomiti sulla fitball", "Russian Twist",
+                   "Russian Twist (con piedi a terra)", "Dead bug", "Sollevamento gambe stringendo la fitball", "Hollow hold", "Fitball overhead roll-up",
+                    "Fitball elevated leg crunches", "Squat contro il muro", "Affondi con piede posteriore sulla fitball", "Sumo squat", "Estesioni braccia e gambe",
+                    "Addominali laterali", "Fitball push-up", "Medicine ball squat", "Wall sit con rotazione fitball"],
+      descrizione: "18 esercizi - 1 ora di allenamento"
     },
     { 
       id: 2, 
       titolo: "DIMAGRIMENTO", 
       immagine: "/dimagrimento.png",
-      allenamenti: ["Cardio HIIT", "Brucia Grassi Intenso", "Circuit Training"]
+      allenamenti: [
+        "Burpee con fitball", 
+        "Stability ball mountain climbers", 
+        "Medicine ball knee tucks", 
+        "Medicine ball sit-up", 
+        "Sit-up throw", 
+        "Medicine chest press", 
+        "Medicine ball-burpes (con push-up sulla spalla)", 
+        "Medicine ball thrusters",  
+        "Affondi con palla medica", 
+        "Slam ball", 
+        "Wall ball sit-ups", 
+        "Affondo indietro con torsione disco", 
+        "Estensione tricipiti sopra la testa", 
+        "Ball toe taps"
+      ],
+      descrizione: "15 esercizi - 50 minuti di allenamento"
     },
     { 
       id: 3, 
       titolo: "FLESSIBILITÀ TOTALE E STRETCHING", 
       immagine: "/flessibilità-totale-e-stretching.png",
-      allenamenti: ["Stretching Mattutino", "Mobilità Articolare", "Yoga Flex", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Pelvic tilts", 
+        "Fitball laterals shisfts", 
+        "Medicine ball halos", 
+        "Fitball back extensions", 
+        "Kneeling stability stretch", 
+        "Overhead ball side bends", 
+        "Side lean with leg support", 
+        "Arm raises on fitball", 
+        "Swiss ball child pose", 
+        "Allenamento dello psoas su fitball", 
+        "Stretching pettorali con fitball", 
+        "Mobilità bacino fitball"
+      ],
+      descrizione: "12 esercizi - 40 minuti di allenamento"
     },
     { 
       id: 4, 
       titolo: "SALUTE DELLE ARTICOLAZIONI", 
       immagine: "/salute-delle-articolazioni.png",
-      allenamenti: ["Rinforzo Ginocchia", "Posturale Schiena", "Mobilità Spalle", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Braccia con miniball", 
+        "Lateral flexion con la fitball"
+      ],
+      descrizione: "2 esercizi - 15 minuti di allenamento"
     },
     { 
       id: 5, 
       titolo: "EQUILIBRIO E POSTURA", 
       immagine: "/equilibrio-e-postura.png",
-      allenamenti: ["Core & Balance", "Stabilità Caviglie", "Riallineamento Posturale", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Roll out sulla fitball", 
+        "Catcow con mani sulla fitball", 
+        "Superman con fitball", 
+        "Harmstring curls on fitball", 
+        "Fitball lat stretch", 
+        "Single leg balance reach", 
+        "Physioball toe tap", 
+        "Esercizio equilibrio complesso", 
+        "Wall squats with a ball", 
+        "Stability ball plank to pike", 
+        "Inclinazioni laterali su fitball-seated"
+      ],
+      descrizione: "11 esercizi - 45 minuti di allenamento"
     }
   ];
 
@@ -129,7 +180,7 @@ function HomePage() {
   };
 
   return (
-    <div className="home-container" style={{ backgroundColor, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23CCCCCC' fill-opacity='0.1'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}>
+    <div className="home-container" style={{ backgroundColor }}>
       
       <div className="panels-grid">
         {programmiOrdinati.map((prog) => {
@@ -146,30 +197,12 @@ function HomePage() {
                 <div className="panel-content">
                   <span className="panel-tag">WORKOUT</span>
                   <h2 className="panel-title">{prog.titolo}</h2>
-                </div>
-              </div>
-
-              {/* Il Cassetto con lista esercizi */}
-              <div className="panel-drawer">
-                <div className="drawer-list">
-                  <ul className="workout-list">
-                    {prog.allenamenti.map((allenamento, index) => (
-                      <li key={index} className="workout-item">
-                        {allenamento}
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="panel-tag">{prog.descrizione}</span>
                 </div>
               </div>
 
               {/* Bottone in fondo full-width */}
               <div className="bttn-container">
-              <button 
-                className={`panel-button ${isOpen ? 'active' : ''}`}
-                onClick={() => toggleDrawer(prog.id)}
-              >
-                {isOpen ? 'Chiudi' : 'View'}
-              </button>
               <button 
                   className="panel-button"
                   onClick={() => handleStartWorkout(prog.allenamenti, prog.titolo)}
@@ -180,6 +213,23 @@ function HomePage() {
             </div>
           );
         })}
+        <div className="glass-panel" style={{'--bg-image': `url(/personalizzato.png)`}}>
+          <div className="panel-main-content">
+            <div className="panel-content">
+              <span className="panel-tag">ESERCIZI PERSONALIZZATI</span>
+              <h2 className="panel-title">CREA IL TUO ALLENAMENTO</h2>
+              <span className="panel-tag">Scegli tra oltre 60 esercizi e crea il tuo programma su misura</span>
+            </div>
+          </div>
+          <div className="bttn-container">
+            <button 
+              className="panel-button"
+              onClick={() => navigate('/visualizza-esercizi')}
+              >
+              Start
+              </button>
+          </div>
+        </div>
       </div>
     </div>
   );

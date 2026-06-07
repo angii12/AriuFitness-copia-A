@@ -18,7 +18,7 @@ export const ColorProvider = ({ children }) => {
 
   const resetColor = () => {
     setBackgroundColor(defaultColor);
-    document.documentElement.style.setProperty('--page-bg-color', defaultColor);
+    document.documentElement.style.setProperty('--page-bg-color', '#ffffff');
   };
 
   useEffect(() => {
