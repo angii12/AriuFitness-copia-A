@@ -403,7 +403,7 @@ function Register() {
                                 className="hide-radio"
                               />
                               <img src="/uomo-giovane.png" alt="Uomo Giovane" className="trainer-image" />
-                              <span className="trainer-box">Uomo Giovane</span>
+                              <span className="trainer-box">Marco</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -416,7 +416,7 @@ function Register() {
                                 className="hide-radio"
                               />
                               <img src="/donna-giovane.png" alt="Donna Giovane" className="trainer-image" />
-                              <span className="trainer-box">Donna Giovane</span>
+                              <span className="trainer-box">Laura</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -429,7 +429,7 @@ function Register() {
                                 className="hide-radio"
                               />
                               <img src="/uomo-adulto.png" alt="Uomo Adulto" className="trainer-image" />
-                              <span className="trainer-box">Uomo Adulto</span>
+                              <span className="trainer-box">Giuseppe</span>
                             </label>
                             <label className="trainer-grid-item">
                               <input 
@@ -442,7 +442,7 @@ function Register() {
                                 className="hide-radio"
                               />
                               <img src="/donna-adulta.png" alt="Donna Adulta" className="trainer-image" />
-                              <span className="trainer-box">Donna Adulta</span>
+                              <span className="trainer-box">Maria</span>
                             </label>
                           </div>
                         </div>

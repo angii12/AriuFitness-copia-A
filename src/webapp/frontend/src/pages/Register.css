@@ -61,3 +61,155 @@
   object-fit: cover;    /* Evita che l'immagine si distorca */
 }
 }
+
+/* --- HIDE RADIO INPUT --- */
+.hide-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* --- GRIGLIA COLORI --- */
+.color-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.color-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  border: 2px solid transparent;
+  user-select: none;
+}
+
+.box-beige {
+  background-color: #B5A281;
+  color: #333333;
+  border-color: #e4d3c2;
+}
+
+.box-verde {
+  background-color: #4B8C56;
+  color: #ffffff;
+}
+
+.box-blu {
+  background-color: #2D69A0;
+  color: #ffffff;
+}
+
+.box-nero {
+  background-color: #1B191A;
+  color: #ffffff;
+}
+
+/* Effetto Hover leggero */
+.color-option:hover .color-box {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Evidenziazione quando selezionato */
+.hide-radio:checked + .color-box {
+  transform: scale(0.97);
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px #2d2d2d;
+}
+
+/* Accessibilità per navigazione da tastiera */
+.hide-radio:focus-visible + .color-box {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3a86c8;
+}
+
+/* --- OPZIONI TEMPO DI ALLENAMENTO --- */
+.time-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.time-box {
+  display: block;
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333333;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+}
+
+/* Effetto Hover */
+.time-list-item:hover .time-box {
+  border-color: #b0b0b0;
+  background-color: #f9f9f9;
+}
+
+/* Evidenziazione quando selezionato */
+.hide-radio:checked + .time-box {
+  border-color: #222222;
+  background-color: #f3f3f3;
+  font-weight: 600;
+  color: #000000;
+}
+
+/* --- SCELTA TRAINER --- */
+.trainer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.trainer-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 12px 10px;
+  background-color: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333333;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+  box-sizing: border-box;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+
+/* Effetto Hover */
+.trainer-grid-item:hover .trainer-box {
+  border-color: #b0b0b0;
+  background-color: #f9f9f9;
+}
+
+/* Evidenziazione quando selezionato */
+.hide-radio:checked + .trainer-image {
+  box-shadow: 0 0 0 3px #e0e0e0;
+  border-radius: 8px;
+}
+
+.hide-radio:checked ~ .trainer-box {
+  border-color: #222222;
+  background-color: #f3f3f3;
+  font-weight: 600;
+  color: #000000;
+}
