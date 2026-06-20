@@ -96,69 +96,67 @@ const FitnessClassifier = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '16px', width: '100%', height: '100%', boxSizing: 'border-box' }}>
       
-      {/* Badge dello Stato del Server */}
-      <div style={{
-        padding: '8px 16px',
-        borderRadius: '20px',
-        backgroundColor: serverStatus.color,
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: '14px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        {serverStatus.text}
-      </div>
+      
 
       <div style={{ 
         display: 'flex', 
-        flexWrap: 'wrap', 
-        justifyContent: 'center', 
-        gap: '30px', 
-        width: '100%', 
-        maxWidth: '1100px' 
+        flexDirection: 'column',
+        justifyContent: 'flex-start', 
+        gap: '12px', 
+        width: '100%',
+        flex: 1,
+        minHeight: 0
       }}>
         
         {/* Box Webcam */}
-        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '100%', flex: 1, minHeight: 0 }}>
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            style={{ width: '100%', maxWidth: '640px', height: 'auto', display: 'block', transform: 'scaleX(-1)' }} // Effetto specchio per l'utente
+            style={{ width: '100%', height: '100%', display: 'block', transform: 'scaleX(-1)', objectFit: 'cover' }}
           />
           <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
         </div>
 
         {/* Pannello Dati e Predizioni */}
         <div style={{
-          flex: '1',
-          minWidth: '320px',
-          maxWidth: '400px',
+          width: '100%',
           backgroundColor: '#fff',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '20px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between'
+          justifyContent: 'flex-start',
+          boxSizing: 'border-box'
         }}>
           <div>
-            <h4 style={{ margin: '0 0 16px 0', color: '#495057', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>
-              Analisi Movimento AI
-            </h4>
             
             <div style={{ marginBottom: '24px' }}>
               <span style={{ fontSize: '14px', color: '#6c757d' }}>Esercizio Corrente</span>
-              <h2 style={{ margin: '4px 0 0 0', color: '#212529', fontSize: '26px', fontWeight: '700' }}>
-                {formatExerciseName(prediction.exercise)}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                <h2 style={{ margin: 0, color: '#212529', fontSize: '26px', fontWeight: '700', flex: 1 }}>
+                  {formatExerciseName(prediction.exercise)}
+                </h2>
+                {prediction.status !== 'buffering' && (
+                  <span style={{ 
+                    fontSize: '28px', 
+                    fontWeight: '800', 
+                    color: getConfidenceColor(prediction.confidence),
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {prediction.confidence}%
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Visualizzazione Avanzamento Buffer o Confidenza */}
-            {prediction.status === 'buffering' ? (
+            {/* Visualizzazione Avanzamento Buffer */}
+            {prediction.status === 'buffering' && (
               <div>
                 <span style={{ fontSize: '14px', color: '#6c757d' }}>Inizializzazione Finestra Temporale...</span>
                 <div style={{ width: '100%', backgroundColor: '#e9ecef', borderRadius: '8px', height: '12px', marginTop: '8px', overflow: 'hidden' }}>
@@ -172,29 +170,6 @@ const FitnessClassifier = () => {
                 <span style={{ fontSize: '12px', color: '#999', display: 'block', marginTop: '4px' }}>
                   Catturati {prediction.frames_stacked} di 8 fotogrammi chiave
                 </span>
-              </div>
-            ) : (
-              <div>
-                <span style={{ fontSize: '14px', color: '#6c757d' }}>Indice di Affidabilità</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
-                  <span style={{ 
-                    fontSize: '36px', 
-                    fontWeight: '800', 
-                    color: getConfidenceColor(prediction.confidence) 
-                  }}>
-                    {prediction.confidence}%
-                  </span>
-                </div>
-                
-                {/* Barra della Confidenza */}
-                <div style={{ width: '100%', backgroundColor: '#e9ecef', borderRadius: '8px', height: '8px', marginTop: '8px', overflow: 'hidden' }}>
-                  <div style={{ 
-                    width: `${prediction.confidence}%`, 
-                    backgroundColor: getConfidenceColor(prediction.confidence), 
-                    height: '100%', 
-                    transition: 'width 0.2s ease' 
-                  }} />
-                </div>
               </div>
             )}
           </div>

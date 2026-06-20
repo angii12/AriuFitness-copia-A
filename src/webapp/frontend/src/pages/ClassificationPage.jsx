@@ -547,50 +547,13 @@ function ClassificationPage() {
         <div className="video-panel glass-card" style={{ flexDirection: 'column' }}>
           {/* Contenitore della webcam (parte grande) */}
           <div className="video-container" >
-            {/* Overlay info Esercizio: Sopra al centro */}
-            {selectedExercise && (
-              <div className="exercise-info-overlay">
-                <div className="exercise-name">
-                  {selectedExercise.nome}
-                </div>
-                <div className="exercise-target">
-                  Target: {currentTargetReps} ripetizioni
-                </div>
-                <div className= "info-card-title">
-                  {selectedExercise && (isStartLocked || countdown !== null || isCountingActive) ? (
-                  <span>
-                    Ancora {remainingReps}
-                  </span>
-                  ) : null}
-                </div>
-              </div>
-            )}
-
-            {/* Video della webcam */}
-            <div className={`video-container ${!isWebcamActive ? 'hidden' : ''}`}>
-              <video ref={videoRef} autoPlay playsInline muted className="webcam-feed" />
-              <canvas ref={canvasRef} width="640" height="480"/>
-            </div>
-
-            {/* Placeholder quando webcam è spenta */}
-            {!isWebcamActive && (
-              <div className="webcam-placeholder">
-                <p>{webcamWarningMessage || 'La tua webcam è disattivata.'}</p>
-              </div>
-            )}
+            <FitnessClassifier />
           </div>
 
           {/* Contenitore pulsanti (parte piccola) */}
           <div className="video-controls">
-            {/* Riga 1: Pulsante Attiva/Disattiva Webcam */}
-            {isWebcamActive && (
-              <button onClick={handleWebcamToggle} className="webcam-toggle-button inside-video">Disattiva Webcam</button>
-            )}
-            {!isWebcamActive && (
-              <button onClick={handleWebcamToggle} className="webcam-toggle-button">Attiva Webcam</button>
-            )}
 
-            {/* Riga 2: Pulsante Inizia */}
+            {/*Pulsante Inizia */}
             {!isStartLocked && countdown === null && !isCountingActive ? (
               <button
                 type="button"
@@ -613,7 +576,9 @@ function ClassificationPage() {
             )}
             
           </div>
-          <FitnessClassifier />
+          
+        
+        
         </div>
 
         {/* PANNELLO TUTORIAL CON VISIBILITÀ CONDIZIONALE */}
