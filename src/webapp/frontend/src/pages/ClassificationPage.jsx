@@ -5,6 +5,7 @@ import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { Camera } from "@mediapipe/camera_utils";
 import { supabase } from '../SupabaseClient';
 import { useColor } from '../context/ColorContext';
+import { usePrediction } from '../context/PredictionContext';
 
 import '../Dashboard.css';
 import './ClassificationPage.css';
@@ -14,11 +15,17 @@ const DEFAULT_TARGET_REPS = 10;
 
 function ClassificationPage() {
   // --- STATI E REF ---
-  const [reps, setReps] = useState(0);
-  const [phrase, setPhrase] = useState('Seleziona un esercizio e attiva la webcam per iniziare.');
+  // Utilizza i dati predetti dal Context condiviso con FitnessClassifier
+  const { prediction } = usePrediction();
+  
+  // Stati per i dati ricevuti in tempo reale (estratti dal Context)
+  const reps = prediction.reps || 0;
+  const phrase = prediction.phrase || 'Inquadrati per iniziare l\'esercizio.';
+  const predictedExercise = prediction.exercise || "";
+  const confidence = prediction.confidence || 0;
+  
   const [selectedExercise, setSelectedExercise] = useState(null);
   const [selectedExercises, setSelectedExercises] = useState([]);
-  const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [stream, setStream] = useState(null);
   const [selectedTutorial, setSelectedTutorial] = useState(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -55,63 +62,6 @@ function ClassificationPage() {
     isCountingActiveRef.current = isCountingActive;
   }, [isCountingActive]);
 
-  //configurare MediaPipe una volta che il componente è montato
-  /*useEffect(() => {
-    if (!isWebcamActive || !videoRef.current) return;
-
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-
-    pose.setOptions({
-      modelComplexity: 1, // 0: Lite, 1: Full, 2: Heavy (1 è il miglior compromesso)
-      smoothLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-    pose.onResults((results) => {
-      if (!canvasRef.current || !videoRef.current) return;
-
-      const canvasCtx = canvasRef.current.getContext("2d");
-      const { width, height } = canvasRef.current;
-
-      // Pulisce il canvas prima di ogni disegno
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, width, height);
-
-      // Disegna lo "stickman" (punti e connessioni)
-      if (results.poseLandmarks) {
-        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-          color: "#00FF00",
-          lineWidth: 4,
-        });
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
-          color: "#FF0000",
-          lineWidth: 2,
-          radius: 3,
-        });
-      }
-      canvasCtx.restore();
-    });
-
-    // Collega MediaPipe al feed video esistente
-    if (videoRef.current) {
-      cameraRef.current = new Camera(videoRef.current, {
-        onFrame: async () => {
-          await pose.send({ image: videoRef.current });
-        },
-        width: 640,
-        height: 480,
-      });
-      cameraRef.current.start();
-    }
-
-    return () => {
-      if (cameraRef.current) cameraRef.current.stop();
-      pose.close();
-    };
-  }, [isWebcamActive]); // Si riattiva quando accendi la webcam*/
 
   /*funzione per mettere in pausa il video tutorial*/
   const pauseTutorialVideo = () => {
@@ -195,7 +145,6 @@ function ClassificationPage() {
       setSelectedExercise(null);
       setReps(0);
       setCurrentExerciseStarted(false);
-      setPhrase("Seleziona il prossimo esercizio per continuare.");
       resetExerciseRuntimeState();
       return;
     }
@@ -211,7 +160,6 @@ function ClassificationPage() {
     setSelectedTutorial(null);
     setCurrentExerciseStarted(false);
     resetExerciseRuntimeState();
-    setPhrase('Hai Finito!');
   };
 
   /*funzione chiamata quando l'utente fornisce un feedback dopo aver completato un esercizio, 
@@ -267,58 +215,9 @@ function ClassificationPage() {
   const handleContinueAfterDifficultNo = () => {
     setIsContinueAfterDifficultModalVisible(false);
     setPendingAdvanceAfterDifficult(false);
-    stopWebcam();
     navigate('/');
   };
 
-  /*funzione per salvare i dati degli esercizi completati in database*/
-  const saveWorkoutToDatabase = async (workoutFeedback, exercisesToSave = completedExercises) => {
-    try {
-      setIsSaving(true);
-      
-      // Ottieni l'utente da localStorage
-      const userJson = localStorage.getItem('user');
-      if (!userJson) {
-        console.error('Errore: utente non trovato in localStorage');
-        return false;
-      }
-      
-      const user = JSON.parse(userJson);
-      const userId = user.id;
-      
-      console.log(`Salvataggio workout per utente: ${userId}`);
-      console.log(`Numero di esercizi completati: ${exercisesToSave.length}`);
-      
-      // Salva ogni esercizio nel database
-      for (const exercise of exercisesToSave) {
-        const { error } = await supabase
-          .from('allenamenti')
-          .insert([
-            {
-              utente: userId,
-              esercizio: exercise.exercise_id,
-              completato: exercise.completed,
-              feedback: exercise.feedback,
-            }
-          ]);
-        
-        if (error) {
-          console.error('Errore nel salvataggio dell\'esercizio:', error);
-          return false;
-        }
-        
-        console.log(`Esercizio ${exercise.exercise_name} salvato con successo`);
-      }
-      
-      console.log('Workout salvato completamente');
-      return true;
-    } catch (err) {
-      console.error('Errore durante il salvataggio del workout:', err);
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   /*funzione chiamata quando l'utente decide di terminare l'allenamento, 
   chiude il pop-up, ferma la webcam e reindirizza alla home*/
@@ -330,109 +229,13 @@ function ClassificationPage() {
     
     // Chiudi il pop-up
     setIsWorkoutFeedbackModalVisible(false);
-    
-    // Controlla se c'è un esercizio in corso non tracciato
-    /*let exercisesToSave = [...completedExercises];
-    if (selectedExercise && currentExerciseIndex < selectedExercises.length) {
-      // Verifica se questo esercizio è già stato tracciato
-      const alreadyTracked = completedExercises.some(ex => ex.exercise_id === selectedExercise.id);
-      
-      if (!alreadyTracked) {
-        // Se l'esercizio è stato iniziato
-        if (currentExerciseStarted) {
-          const lastExerciseData = {
-            exercise_id: selectedExercise.id,
-            exercise_name: selectedExercise.nome,
-            completed: reps >= currentTargetReps,
-            reps: reps,
-            feedback: finalFeedback, // Default feedback se non è stato fornito
-            timestamp: exerciseStartTime 
-              ? new Date(exerciseStartTime).toISOString() 
-              : new Date().toISOString(),
-          };
-          exercisesToSave = [...exercisesToSave, lastExerciseData];
-          console.log('Ultimo esercizio aggiunto al salvataggio:', lastExerciseData);
-        } else {
-          // Se l'esercizio NON è stato iniziato, traccialo come saltato
-          const skippedExerciseData = {
-            exercise_id: selectedExercise.id,
-            exercise_name: selectedExercise.nome,
-            completed: false,
-            reps: 0,
-            feedback: null,
-            timestamp: new Date().toISOString(),
-          };
-          exercisesToSave = [...exercisesToSave, skippedExerciseData];
-          console.log('Esercizio saltato aggiunto al salvataggio:', skippedExerciseData);
-        }
-      }
-    }
-    
-    // Salva il workout nel database
-    const saved = await saveWorkoutToDatabase(finalFeedback, exercisesToSave);
-    
-    if (saved) {
-      console.log('Workout salvato con successo!');
-    } else {
-      console.warn('Errore nel salvataggio del workout, ma comunque reindirizzando...');
-    }
-    */
-    // Spegni la webcam e altre pulizie se necessario
-    stopWebcam();
+
     
     // Reindirizza l'utente alla pagina principale
     navigate('/');
   };
 
   // --- FUNZIONI DI CONTROLLO WEBCAM ---
-  const startWebcam = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      } else {
-        console.error("ERRORE: videoRef.current è nullo! Impossibile mostrare il video.");
-      }
-      setIsWebcamActive(true);
-    } catch (err) {
-      console.error("Errore nell'accesso alla webcam:", err);
-      setPhrase("Accesso alla webcam negato. Controlla i permessi del browser.");
-    }
-  };  
-
-  const stopWebcam = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setIsWebcamActive(false);
-    setStream(null);
-  };
-
-  const handleWebcamToggle = () => {
-    if (isWebcamActive) {
-      stopWebcam();
-    } else {
-      startWebcam();
-    }
-  };
-
-  useEffect(() => {
-    // Se la webcam viene spenta durante l'esercizio, fermiamo tutorial e mettiamo in pausa la sessione.
-    if (isWebcamActive) {
-      setWebcamWarningMessage("");
-      return;
-    }
-
-    const wasInExercise = isStartLocked || countdown !== null || isCountingActive;
-    if (!wasInExercise) return;
-
-    pauseTutorialVideo();
-    resetExerciseRuntimeState();
-    const msg = 'Attenzione! Non riusciamo a rilevare la videocamera!';
-    setWebcamWarningMessage(msg);
-    setPhrase(msg);
-  }, [isWebcamActive]);
   
 
   useEffect(() => {
@@ -466,14 +269,12 @@ function ClassificationPage() {
       setIsCountingActive(false);
       setCountdown(null);
       setIsStartLocked(false);
-      setPhrase('Hai Finito!');
       return;
     }
 
     setCurrentExerciseIndex(nextIndex);
     const nextExercise = selectedExercises[nextIndex];
     handleExerciseSelect(nextExercise);
-    setPhrase('Pronto per il prossimo esercizio. Premi Inizia quando vuoi partire.');
   };
 
   const currentTargetReps = DEFAULT_TARGET_REPS;
@@ -507,11 +308,6 @@ function ClassificationPage() {
     return () => clearTimeout(t);
   }, [reps, isCountingActive, selectedExercise]);
 
-  
-
-  const handleManualAddReps = (delta) => {
-    setReps((prev) => prev + delta);
-  };
 
   /*funzione chiamata quando si seleziona un esercizio dalla lista, 
   imposta l'esercizio selezionato e carica il video tutorial corrispondente se presente*/
@@ -529,12 +325,43 @@ function ClassificationPage() {
   };
 
   const handleStartExercise = () => {
-    if (!selectedExercise || !isWebcamActive) {
+    if (!selectedExercise) {
       return;
     }
     setCurrentExerciseStarted(true);
     setIsStartLocked(true);
     setCountdown(5);
+  };
+
+  const getExerciseDetails = (exerciseKey) => {
+    const details = {
+      'sollevamento_gambe_stringendo_la_fitball': {
+        tool: 'Fitball (Palla Grande)',
+        description: 'Sdraiati a terra supino, stringi la fitball tra le gambe e solleva il bacino contraendo i glutei.'
+      },
+      'braccia_con_miniball': {
+        tool: 'Miniball (Palla Piccola 25/35 cm)',
+        description: 'Disteso a pancia in giù, stringi la miniball tra le mani ed estendi il busto verso l\'alto controllando il movimento.'
+      },
+      'medicine_ball_squat': {
+        tool: 'Palla Medica (Zavorrata)',
+        description: 'In piedi con i piedi alla larghezza delle spalle, tieni la palla al petto ed esegui un profondo squat mantenendo la schiena dritta.'
+      },
+      'roll_out_sulla_fitball': {
+        tool: 'Fitball (Palla Grande)',
+        description: 'In ginocchio, appoggia gli avambracci sulla fitball e rotola in avanti attivando la stabilità del core senza inarcare i lombari.'
+      },
+      'fitball_back_extensions': {
+        tool: 'Fitball (Palla Grande)',
+        description: 'Posiziona l\'addome sulla fitball con i piedi stabili a terra, fletti il busto in avanti e poi estendilo controllando i muscoli della schiena.'
+      },
+      'overhead_ball_side_bends': {
+        tool: 'Fitball o Palla Medica leggera',
+        description: 'In piedi, solleva la palla sopra la testa a braccia tese ed esegui delle flessioni laterali stabili del busto.'
+      }
+    };
+
+    return details[exerciseKey] || { tool: 'Seleziona un esercizio', description: 'In attesa che l\'IA rilevi il tuo movimento...' };
   };
 
   // --- JSX RENDER ---
@@ -547,7 +374,7 @@ function ClassificationPage() {
         <div className="video-panel glass-card" style={{ flexDirection: 'column' }}>
           {/* Contenitore della webcam (parte grande) */}
           <div className="video-container" >
-            <FitnessClassifier />
+            <FitnessClassifier selectedExercise={selectedExercise} />
           </div>
 
           {/* Contenitore pulsanti (parte piccola) */}
@@ -558,11 +385,11 @@ function ClassificationPage() {
               <button
                 type="button"
                 onClick={handleStartExercise}
-                disabled={!isWebcamActive || !selectedExercise}
+                disabled={!selectedExercise}
                 className="webcam-toggle-button"
                 style={{
-                  opacity: !isWebcamActive || !selectedExercise ? 0.6 : 1,
-                  cursor: !isWebcamActive || !selectedExercise ? 'not-allowed' : 'pointer',
+                  opacity: !selectedExercise ? 0.6 : 1,
+                  cursor: !selectedExercise ? 'not-allowed' : 'pointer',
                 }}
               >
                 Inizia
@@ -596,38 +423,35 @@ function ClassificationPage() {
           </div>
         </div>
 
-        {/* Pannello Ripetizioni */}
+        {/* Pannello Ripetizioni ed Esercizio */}
         <div id="reps-panel" className="info-card glass-card">
-          <div>
-            <h3>Strumento da usare:</h3> <span>palla 25/35/45 cm</span>
-            <h3>Descrizione:</h3><p>descrizione dell'esercizio</p>
+          <div className="exercise-details">
+            <h3>Esercizio Rilevato:</h3>
+            <span className="exercise-detected-name">
+              {predictedExercise ? predictedExercise.replace(/_/g, ' ').toUpperCase() : "In attesa..."}
+              {confidence > 0 && ` (${confidence}%)`}
+            </span>
+            
+            <h3>Strumento da usare:</h3> 
+            <span>{getExerciseDetails(predictedExercise).tool}</span>
+            
+            <h3>Descrizione:</h3>
+            <p>{getExerciseDetails(predictedExercise).description}</p>
           </div>
-          <div className='reps-buttons' >
-            <button
-              type="button"
-              onClick={() => handleManualAddReps(1)}
-              disabled={!selectedExercise || countdown !== null || !isCountingActive}
-              className="reset-button"
-              style={{ cursor: !selectedExercise || !isCountingActive ? 'not-allowed' : 'pointer', opacity: !selectedExercise || !isCountingActive ? 0.6 : 1 }}
-            >
-              +1
-            </button>
-            <button
-              type="button"
-              onClick={() => handleManualAddReps(5)}
-              disabled={!selectedExercise || countdown !== null || !isCountingActive}
-              className="reset-button"
-              style={{ cursor: !selectedExercise || !isCountingActive ? 'not-allowed' : 'pointer', opacity: !selectedExercise || !isCountingActive ? 0.6 : 1 }}
-            >
-              +5
-            </button>
+
+          {/* Visualizzazione gigante del contatore IA */}
+          <div className="reps-counter-box" style={{ textAlign: 'center', marginTop: '15px' }}>
+            <h2 style={{ fontSize: '1.2rem', color: 'var(--text-secondary, #aaa)', marginBottom: '5px' }}>RIPETIZIONI</h2>
+            <span className="reps-number" style={{ fontSize: '3.5rem', fontWeight: 'bold', color: '#00ffcc' }}>
+              {reps}
+            </span>
           </div>
         </div>
         
         {/* Pannello Feedback */}
         <div id="feedback-panel" className="info-card glass-card trainer-feedback">
           <h3>FEEDBACK DEL COACH</h3>
-          <p>{phrase}</p>
+          <p className="coach-phrase">{phrase}</p>
         </div>
       </div>
 
