@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ColorProvider } from './context/ColorContext';
 import GlobalHeader from './components/GlobalHeader'; // Importa il nuovo header
+import FitnessClassifier from './components/FitnessClassifier';
 import HomePage from './pages/HomePage';
 import ClassificationPage from './pages/ClassificationPage';
 import ExerciseListPage from './pages/ExerciseListPage';

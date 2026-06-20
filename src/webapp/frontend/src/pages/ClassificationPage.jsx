@@ -8,6 +8,7 @@ import { useColor } from '../context/ColorContext';
 
 import '../Dashboard.css';
 import './ClassificationPage.css';
+import FitnessClassifier from '../components/FitnessClassifier';
 
 const DEFAULT_TARGET_REPS = 10;
 
@@ -612,6 +613,7 @@ function ClassificationPage() {
             )}
             
           </div>
+          <FitnessClassifier />
         </div>
 
         {/* PANNELLO TUTORIAL CON VISIBILITÀ CONDIZIONALE */}
