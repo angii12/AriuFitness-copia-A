@@ -5,7 +5,7 @@ import collections
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn as float
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,38 +28,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CARICAMENTO MODELLO A 3 RAMI ---
+# --- CONFIGURAZIONE E CARICAMENTO ENSEMBLE DI 6 MODELLI BINARI ---
 MODELS_PATH = util.getModelsPath()
 PARAMS_PATH = os.path.join(MODELS_PATH, 'best_params_3rami.npy')
 
 print("Caricamento parametri ottimali del modello a 3 rami...")
 best_param = np.load(PARAMS_PATH, allow_pickle=True).item()
 
-model = MultiInputLSTM(
-    input_size_1=best_param['X1_size'],
-    input_size_2=best_param['X2_size'],
-    input_size_3=best_param['X3_size'],
-    hidden_size_1=best_param['hidden_size_1'],
-    hidden_size_2=best_param['hidden_size_2'],
-    hidden_size_3=best_param['hidden_size_3'],
-    num_classes=best_param['num_classes'],
-    dropout_rate=best_param['dropout_rate']
-).to(device)
+# Lista degli esercizi esatti (corrispondenti ai nomi dei file .pth salvati)
+esercizi = [
+    "sollevamento_gambe_stringendo_la_fitball",
+    "braccia_con_miniball",
+    "roll_out_sulla_fitball",
+    "medicine_ball_squat",
+    "fitball_back_extensions",
+    "overhead_ball_side_bends"
+]
 
-MODEL_WEIGHTS = os.path.join(MODELS_PATH, 'LSTM_Combo3_Ottimizzato.pth')
-model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=device))
-model.eval()
-print("✅ Modello a 3 rami pronto per l'inferenza in tempo reale.")
+# Dizionario che conterrà le istanze dei 6 modelli pronti a lavorare
+modelli_ensemble = {}
 
-DATASET_PATH = util.getDatasetPath()
-categories = np.load(os.path.join(DATASET_PATH, "categories.npy"), allow_pickle=True).tolist()
+print("Caricamento in memoria dei 6 modelli binari indipendenti...")
+for esercizio in esercizi:
+    # 1. Inizializziamo l'architettura forzando num_classes=1 (Classificazione Binaria)
+    model_binario = MultiInputLSTM(
+        input_size_1=best_param['X1_size'],
+        input_size_2=best_param['X2_size'],
+        input_size_3=best_param['X3_size'],
+        hidden_size_1=best_param['hidden_size_1'],
+        hidden_size_2=best_param['hidden_size_2'],
+        hidden_size_3=best_param['hidden_size_3'],
+        num_classes=1, # <--- 1 solo output per modello binario
+        dropout_rate=best_param['dropout_rate']
+    ).to(device)
 
+    # 2. Carichiamo i pesi specifici salvati durante la Fase 3
+    weights_path = os.path.join(MODELS_PATH, f'LSTM_Binario_{esercizio}.pth')
+    model_binario.load_state_dict(torch.load(weights_path, map_location=device))
+    model_binario.eval() # Modalità inferenza
+    
+    # 3. Salviamo il modello nel nostro dizionario
+    modelli_ensemble[esercizio] = model_binario
 
-# --- GESTIONE DEL FLUSSO WEBSOCKET CON BUFFER MEMORIA DI LUNGHEZZA 8 ---
+print("Tutti e 6 i modelli binari sono stati caricati e sono pronti!")
+
+# --- GESTIONE DEL FLUSSO WEBSOCKET CON BUFFER MEMORIA ---
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("🔌 Client React connesso al canale WebSocket!")
+    print("Client React connesso al canale WebSocket!")
 
     # Reset dei contatori all'apertura di una nuova sessione
     global tracker
@@ -68,7 +85,10 @@ async def websocket_endpoint(websocket: WebSocket):
     #MODIFICA: Usiamo una lista normale come "storico grezzo" invece del deque rigido da 8
     raw_history_buffer = []
     max_history_length = 50 # Contiene abbastanza frame storici per coprire il salto temporale    
-    
+
+    # STATO INIZIALE: Il sistema attende che l'utente sia visibile per la prima volta
+    is_fully_visible_at_start = False
+
     try:
         while True:
             data = await websocket.receive_text()
@@ -100,7 +120,45 @@ async def websocket_endpoint(websocket: WebSocket):
                 kp_data = frame_obj.process_keypoints()   # Ramo 1
                 an_data = frame_obj.process_angles()      # Ramo 2
                 ball_data = frame_obj.process_only_ball() # Ramo 3
+
+                # --- NUOVO CONTROLLO MIRATO SUGLI EXERCISE KEYPOINTS ---
+                landmarks_mediapipe = frame_obj.get_landmarks()
                 
+                # Indici MediaPipe per: spalle, gomiti, polsi, anche, ginocchia, caviglie/piedi
+                indici_richiesti = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+                                
+# Se non siamo ancora partiti ufficialmente, facciamo il controllo severo
+                if not is_fully_visible_at_start:
+                    corpo_visibile = True
+                    if not landmarks_mediapipe:
+                        corpo_visibile = False
+                    else:
+                        for idx in indici_richiesti:
+                            if idx >= len(landmarks_mediapipe) or landmarks_mediapipe[idx].visibility < 0.5:
+                                corpo_visibile = False
+                                break
+                    
+                    if not corpo_visibile:
+                        response = {
+                            "status": "buffering",
+                            "frames_stacked": len(raw_history_buffer),
+                            "exercise": "Allontanati e inquadra il corpo 🧍‍♂️",
+                            "confidence": 0.0,
+                            "reps": tracker.get_reps(),
+                            "phrase": "Posizionati nella tua postazione in modo da mostrare tutte le articolazioni."
+                        }
+                        await websocket.send_text(json.dumps(response))
+                        continue # Salta il frame e non riempie il buffer iniziale
+                    else:
+                        # SBLOCCO: L'utente si è posizionato correttamente per la prima volta!
+                        is_fully_visible_at_start = True
+                        print("🚀 Utente posizionato correttamente. Sistema di riconoscimento sbloccato!")
+                
+                # Se MediaPipe si perde completamente un frame a causa di un'occlusione estrema durante il movimento, 
+                # facciamo solo un check di sopravvivenza per non far crashare i calcoli successivi
+                if not landmarks_mediapipe:
+                    continue
+                # -------------------------------------------------------------------------------------                
                 # 4. Salviamo questa terna nel nostro buffer temporaneo
                 raw_history_buffer.append((kp_data, an_data, ball_data))
 
@@ -125,7 +183,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     await websocket.send_text(json.dumps(response))
                     continue
 
-                # 6. 🌟 MODIFICA: Campionamento a salti equidistanti (Stesso comportamento del Dataset!)
+                # 6.MODIFICA: Campionamento a salti equidistanti (Stesso comportamento del Dataset!)
                 # Partiamo dall'ultimo frame inserito (-1) e andiamo a ritroso estraendo un frame ogni SKIP_INTERVAL
                 sampled_window = raw_history_buffer[-1 : -min_frames_required - 1 : -SKIP_INTERVAL]
                 
@@ -153,11 +211,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     }
                     await websocket.send_text(json.dumps(response))
                     continue
-
-                # --- SE SUPERA LA SOGLIA, PROCEDE CON IL MODELLO A 3 RAMI (Codice attuale) ---
-                x1_np = np.expand_dims(kp_window_np, axis=0)
-                x2_np = np.expand_dims(np.array([f[1] for f in raw_history_buffer]), axis=0)
-                x3_np = np.expand_dims(np.array([f[2] for f in raw_history_buffer]), axis=0)
                 
                 # 6. Se il buffer è pieno (ha esattamente 8 frame), costruiamo il minibatch per la LSTM
                 # Estraiamo separatamente le liste per i 3 rami dalla coda
@@ -176,19 +229,24 @@ async def websocket_endpoint(websocket: WebSocket):
                 x2_tensor = torch.tensor(x2_np, dtype=torch.float32).to(device)
                 x3_tensor = torch.tensor(x3_np, dtype=torch.float32).to(device)
                 
-                # 7. Eseguiamo il Forward pass del modello (Predizione al volo)
-                with torch.no_grad():
-                    logits = model(x1_tensor, x2_tensor, x3_tensor)
-                    # Convertiamo i logits grezzi in probabilità (0.0 - 1.0) usando la Softmax
-                    probabilities = F.softmax(logits, dim=1)
-                    
-                    # Troviamo l'indice della classe con probabilità maggiore
-                    pred_idx = torch.argmax(probabilities, dim=1).item()
-                    confidence = probabilities[0][pred_idx].item()
+                # --- NUOVA LOGICA DI INFERENZA MULTI-MODELLO (ENSEMBLE) ---
+                best_exercise = "Esercizio Sconosciuto"
+                highest_confidence = 0.0
                 
-                # Mappiamo l'indice nel nome testuale dell'esercizio
-                predicted_exercise = categories[pred_idx]
-                confidence_percentage = round(confidence * 100, 2)
+                with torch.no_grad():
+                    # Interroghiamo tutti e 6 i modelli sullo stesso identico input temporale
+                    for nome_esercizio, modello in modelli_ensemble.items():
+                        logit = modello(x1_tensor, x2_tensor, x3_tensor)
+                        # Schiacciamo il logit tra 0.0 e 1.0 usando la Sigmoide (visto che l'output è pari a 1)
+                        probabilita_binaria = torch.sigmoid(logit).item()
+                        
+                        # Il modello con il punteggio più alto si aggiudica la predizione corrente
+                        if probabilita_binaria > highest_confidence:
+                            highest_confidence = probabilita_binaria
+                            best_exercise = nome_esercizio
+
+                confidence_percentage = round(highest_confidence * 100, 2)
+
                 
                 # --- AGGIORNAMENTO DEL TRACKER CON LE CORREZIONI (Fase 4) ---
                 # Aggiorna il contatore solo se l'IA è sufficientemente stabile
@@ -198,14 +256,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     if landmarks_mediapipe:
                         # Comunichiamo al tracker i punti e l'esercizio predetto
-                        tracker.update(predicted_exercise, landmarks_mediapipe)
+                        tracker.update(best_exercise, landmarks_mediapipe)
 
                 # 8. Inviamo il responso finale in tempo reale a React recuperando 
                 # i contatori aggiornati dal tracker
                 response = {
                     "status": "predicted",
                     "frames_stacked": 8,
-                    "exercise": predicted_exercise,
+                    "exercise": best_exercise,
                     "confidence": confidence_percentage, 
                     "reps": tracker.get_reps(),
                     "phrase": tracker.get_phrase()

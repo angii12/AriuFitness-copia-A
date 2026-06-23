@@ -21,6 +21,7 @@ const FitnessClassifier = ({ selectedExercise }) => {
 
     wsRef.current.onopen = () => {
       setServerStatus({ text: 'Rete AI Attiva ⚡', color: '#28a745' });
+            
       startWebcam();
     };
 
@@ -137,7 +138,6 @@ const FitnessClassifier = ({ selectedExercise }) => {
           }}>
             <div>
               <div style={{ marginBottom: '12px' }}>
-                <span style={{ fontSize: '12px', color: '#6c757d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Esercizio Corrente</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
                   <h2 style={{ margin: 0, color: '#212529', fontSize: '20px', fontWeight: '700', flex: 1 }}>
                     {formatExerciseName(prediction.exercise)}
@@ -158,7 +158,6 @@ const FitnessClassifier = ({ selectedExercise }) => {
               {/* Visualizzazione Avanzamento Buffer */}
               {prediction.status === 'buffering' && (
                 <div>
-                  <span style={{ fontSize: '12px', color: '#6c757d' }}>Inizializzazione Finestra Temporale...</span>
                   <div style={{ width: '100%', backgroundColor: '#e9ecef', borderRadius: '8px', height: '10px', marginTop: '6px', overflow: 'hidden' }}>
                     <div style={{ 
                       width: `${(prediction.frames_stacked / 8) * 100}%`, 
@@ -167,9 +166,6 @@ const FitnessClassifier = ({ selectedExercise }) => {
                       transition: 'width 0.1s ease-in-out' 
                     }} />
                   </div>
-                  <span style={{ fontSize: '11px', color: '#999', display: 'block', marginTop: '4px' }}>
-                    Catturati {prediction.frames_stacked} di 8 fotogrammi chiave
-                  </span>
                 </div>
               )}
             </div>

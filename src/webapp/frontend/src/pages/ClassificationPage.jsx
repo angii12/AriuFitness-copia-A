@@ -233,14 +233,19 @@ function ClassificationPage() {
     
     // Reindirizza l'utente alla pagina principale
     navigate('/');
-  };
-
-  // --- FUNZIONI DI CONTROLLO WEBCAM ---
-  
+  };  
 
   useEffect(() => {
-    // Se il countdown non è attivo, non fare nulla
-    if (countdown === null) return;
+    //Se l'utente non ha ancora scelto l'esercizio, non fare nulla
+    if (!selectedExercise) return;
+
+    //Se il countdown non è ancora partito, l'esercizio non è attivo 
+    //e il backend ci dice che l'utente è finalmente in posizione ('predicted') -> AVVIA IL TIMER
+    if (countdown === null && !isCountingActive && prediction.status === 'predicted') {
+      console.log("🧍‍♂️ Sistema sbloccato! L'utente è in posizione. Avvio il countdown...");
+      setCountdown(5);
+      return;
+    }
   
     // Se il countdown arriva a 0, avvia l'esercizio
     if (countdown === 0) {
@@ -252,13 +257,14 @@ function ClassificationPage() {
     }
   
     // Se il countdown è > 0, imposta un timer per scalarlo di 1 dopo un secondo
+    if (countdown !== null && countdown > 0) {
     const timer = setTimeout(() => {
       setCountdown(countdown - 1);
     }, 1000);
-  
-    // Pulisce il timer se il componente viene smontato
+    
     return () => clearTimeout(timer);
-  }, [countdown, selectedExercise]); // Dipende anche dall'esercizio selezionato
+    }
+  }, [countdown, selectedExercise, prediction.status, isCountingActive]); // Dipende anche dall'esercizio selezionato
 
   const advanceToNextExercise = () => {
     const nextIndex = currentExerciseIndex + 1;
@@ -380,21 +386,6 @@ function ClassificationPage() {
           {/* Contenitore pulsanti (parte piccola) */}
           <div className="video-controls">
 
-            {/*Pulsante Inizia */}
-            {!isStartLocked && countdown === null && !isCountingActive ? (
-              <button
-                type="button"
-                onClick={handleStartExercise}
-                disabled={!selectedExercise}
-                className="webcam-toggle-button"
-                style={{
-                  opacity: !selectedExercise ? 0.6 : 1,
-                  cursor: !selectedExercise ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Inizia
-              </button>
-            ) : null}
 
             {isCompletedVisible && (
               <div className="completed-message" >
