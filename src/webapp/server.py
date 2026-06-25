@@ -89,10 +89,18 @@ async def websocket_endpoint(websocket: WebSocket):
     # STATO INIZIALE: Il sistema attende che l'utente sia visibile per la prima volta
     is_fully_visible_at_start = False
 
+    selectedExercise = None  # Variabile per memorizzare l'esercizio selezionato dal client
+
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
+
+            if "selected_exercise" in message:
+                selected_exercise = message["selected_exercise"]
+                print(f"Esercizio selezionato dal client: {selected_exercise}")
+                continue
+
             image_base64 = message.get("image")
             
             if image_base64:
@@ -127,7 +135,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Indici MediaPipe per: spalle, gomiti, polsi, anche, ginocchia, caviglie/piedi
                 indici_richiesti = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
                                 
-# Se non siamo ancora partiti ufficialmente, facciamo il controllo severo
+                # Se non siamo ancora partiti ufficialmente, facciamo il controllo severo
                 if not is_fully_visible_at_start:
                     corpo_visibile = True
                     if not landmarks_mediapipe:
@@ -142,7 +150,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         response = {
                             "status": "buffering",
                             "frames_stacked": len(raw_history_buffer),
-                            "exercise": "Allontanati e inquadra il corpo 🧍‍♂️",
+                            "exercise": "Allontanati e inquadra il corpo",
                             "confidence": 0.0,
                             "reps": tracker.get_reps(),
                             "phrase": "Posizionati nella tua postazione in modo da mostrare tutte le articolazioni."
@@ -152,7 +160,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     else:
                         # SBLOCCO: L'utente si è posizionato correttamente per la prima volta!
                         is_fully_visible_at_start = True
-                        print("🚀 Utente posizionato correttamente. Sistema di riconoscimento sbloccato!")
+                        print("Utente posizionato correttamente. Sistema di riconoscimento sbloccato!")
                 
                 # Se MediaPipe si perde completamente un frame a causa di un'occlusione estrema durante il movimento, 
                 # facciamo solo un check di sopravvivenza per non far crashare i calcoli successivi
@@ -247,10 +255,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 confidence_percentage = round(highest_confidence * 100, 2)
 
-                
                 # --- AGGIORNAMENTO DEL TRACKER CON LE CORREZIONI (Fase 4) ---
                 # Aggiorna il contatore solo se l'IA è sufficientemente stabile
-                if confidence_percentage > 70.0:
+                if confidence_percentage > 70.0 and best_exercise == selected_exercise:
                     # Otteniamo la lista di landmark tramite la funzione get_landmarks() del tuo Frame
                     landmarks_mediapipe = frame_obj.get_landmarks()
                     

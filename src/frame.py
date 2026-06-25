@@ -15,7 +15,7 @@ TASK_FILE_PATH = os.path.join(CURRENT_DIR, "pose_landmarker_lite.task")
 TASK_FILE_PATH = os.path.abspath(TASK_FILE_PATH)
 
 # Normalizziamo il percorso per sicurezza
-TASK_FILE_PATH = os.path. Carrollpath = os.path.abspath(TASK_FILE_PATH)
+TASK_FILE_PATH = os.path.abspath(TASK_FILE_PATH)
 
 # --- INIZIALIZZAZIONE MEDIAPIPE ---
 base_options = python.BaseOptions(model_asset_path=TASK_FILE_PATH)

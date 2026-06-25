@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePrediction } from '../context/PredictionContext';
+import './FitnessClassifier.css';
 
-const FitnessClassifier = ({ selectedExercise }) => {
+const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive, isExerciseFinished }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
@@ -21,13 +22,19 @@ const FitnessClassifier = ({ selectedExercise }) => {
 
     wsRef.current.onopen = () => {
       setServerStatus({ text: 'Rete AI Attiva ⚡', color: '#28a745' });
-            
+      const exerciseKey = selectedExercise?.nome
+        ?.toLowerCase()
+        .replace(/ /g, '_');
+      wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey }));
       startWebcam();
     };
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setPrediction(data);
+      if (onCheckExercise) {
+        onCheckExercise(data.exercise, data.confidence, isCountingActive);
+      }
     };
 
     wsRef.current.onclose = () => {
@@ -45,6 +52,22 @@ const FitnessClassifier = ({ selectedExercise }) => {
       if (wsRef.current) wsRef.current.close();
     };
   }, [selectedExercise]);
+
+  useEffect(() => {
+    if (isExerciseFinished) {
+      stopStreaming();
+      setServerStatus({ text: 'Esercizio Completato', color: '#28a745' });
+      
+      if (typeof setPrediction === 'function') {
+        setPrediction({ status: 'Inattivo', reps: 0, confidence: 0 });
+      }
+    } else {
+      // Se la websocket è ancora aperta, riportiamo il server status in modalità attiva
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
+      }
+    }  
+  }, [isExerciseFinished]);
 
   const startWebcam = async () => {
     try {
@@ -125,29 +148,16 @@ const FitnessClassifier = ({ selectedExercise }) => {
           <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
           
           {/* Overlay Pannello Dati - Posizionato sopra il video */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            right: '20px',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderRadius: '12px',
-            padding: '16px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            backdropFilter: 'blur(10px)'
-          }}>
+          <div className="classifier-overlay">
             <div>
               <div style={{ marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
-                  <h2 style={{ margin: 0, color: '#212529', fontSize: '20px', fontWeight: '700', flex: 1 }}>
+                <div className="classifier-header-row">
+                  <h2 className="classifier-exercise-title">
                     {formatExerciseName(prediction.exercise)}
                   </h2>
                   {prediction.status !== 'buffering' && (
-                    <span style={{ 
-                      fontSize: '24px', 
-                      fontWeight: '800', 
+                    <span className="classifier-confidence-badge" style={{ 
                       color: getConfidenceColor(prediction.confidence),
-                      whiteSpace: 'nowrap'
                     }}>
                       {prediction.confidence}%
                     </span>
@@ -157,13 +167,10 @@ const FitnessClassifier = ({ selectedExercise }) => {
 
               {/* Visualizzazione Avanzamento Buffer */}
               {prediction.status === 'buffering' && (
-                <div>
-                  <div style={{ width: '100%', backgroundColor: '#e9ecef', borderRadius: '8px', height: '10px', marginTop: '6px', overflow: 'hidden' }}>
-                    <div style={{ 
+                <div className="buffer-wrapper">
+                  <div className="buffer-bar-container">
+                    <div className="buffer-bar" style={{ 
                       width: `${(prediction.frames_stacked / 8) * 100}%`, 
-                      backgroundColor: '#ff9800', 
-                      height: '100%', 
-                      transition: 'width 0.1s ease-in-out' 
                     }} />
                   </div>
                 </div>

@@ -11,12 +11,12 @@ import '../Dashboard.css';
 import './ClassificationPage.css';
 import FitnessClassifier from '../components/FitnessClassifier';
 
-const DEFAULT_TARGET_REPS = 10;
+const DEFAULT_TARGET_REPS = 5;
 
 function ClassificationPage() {
   // --- STATI E REF ---
   // Utilizza i dati predetti dal Context condiviso con FitnessClassifier
-  const { prediction } = usePrediction();
+  const { prediction, setPrediction } = usePrediction();
   
   // Stati per i dati ricevuti in tempo reale (estratti dal Context)
   const reps = prediction.reps || 0;
@@ -46,6 +46,8 @@ function ClassificationPage() {
   const [currentExerciseStarted, setCurrentExerciseStarted] = useState(false);
   const [isExerciseFinished, setIsExerciseFinished] = useState(false);
 
+  const [warningMessage, setWarningMessage] = useState("");
+
   const videoRef = useRef(null);
 
   const tutorialVideoRef = useRef(null);
@@ -55,6 +57,8 @@ function ClassificationPage() {
 
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
+
+  const dingAudioRef = useRef(new Audio('/ding.mp3'));
 
   const { backgroundColor } = useColor();
 
@@ -143,7 +147,7 @@ function ClassificationPage() {
       
       setCurrentExerciseIndex(nextIndex);
       setSelectedExercise(null);
-      setReps(0);
+      reps = 0;
       setCurrentExerciseStarted(false);
       resetExerciseRuntimeState();
       return;
@@ -239,16 +243,54 @@ function ClassificationPage() {
     //Se l'utente non ha ancora scelto l'esercizio, non fare nulla
     if (!selectedExercise) return;
 
+    if (isExerciseFinished) return;
+
+  // Funzione interna per generare il "BIP" acustico artificiale
+    const playBeep = (isFinal = false) => {
+      try {
+        // Creiamo il contesto audio
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        
+        const ctx = new AudioContext();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        // Se è l'ultimo bip (quando parte l'esercizio), facciamo un suono più acuto e lungo
+        if (isFinal) {
+          oscillator.frequency.value = 880; // Nota La5 (più alta)
+          gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+          oscillator.start(ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          oscillator.stop(ctx.currentTime + 0.4);
+        } else {
+          // Bip normale per i numeri intermedi (5, 4, 3, 2, 1)
+          oscillator.frequency.value = 440; // Nota La4 (standard)
+          gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+          oscillator.start(ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+          oscillator.stop(ctx.currentTime + 0.15);
+        }
+      } catch (e) {
+        console.warn("Impossibile riprodurre l'audio (restrizioni del browser):", e);
+      }
+    };
+
     //Se il countdown non è ancora partito, l'esercizio non è attivo 
     //e il backend ci dice che l'utente è finalmente in posizione ('predicted') -> AVVIA IL TIMER
     if (countdown === null && !isCountingActive && prediction.status === 'predicted') {
-      console.log("🧍‍♂️ Sistema sbloccato! L'utente è in posizione. Avvio il countdown...");
+      console.log(`${countdown}, ${isCountingActive}, ${prediction.status}`);
+      playBeep(false); // Primo bip per il countdown
       setCountdown(5);
       return;
     }
   
     // Se il countdown arriva a 0, avvia l'esercizio
     if (countdown === 0) {
+      playBeep(true);
       setCountdown(null); // Nasconde il countdown
       setIsCountingActive(true); // Attiva il conteggio delle ripetizioni
       setExerciseStartTime(Date.now()); // Registra l'inizio dell'esercizio
@@ -259,24 +301,46 @@ function ClassificationPage() {
     // Se il countdown è > 0, imposta un timer per scalarlo di 1 dopo un secondo
     if (countdown !== null && countdown > 0) {
     const timer = setTimeout(() => {
+      playBeep(true); // Bip per il countdown
       setCountdown(countdown - 1);
     }, 1000);
     
     return () => clearTimeout(timer);
     }
-  }, [countdown, selectedExercise, prediction.status, isCountingActive]); // Dipende anche dall'esercizio selezionato
+  }, [countdown, selectedExercise, prediction.status, isCountingActive]); 
 
   const advanceToNextExercise = () => {
     const nextIndex = currentExerciseIndex + 1;
+
+    setPrediction({
+      status: 'Inattivo',
+      exercise: '',
+      confidence: 0,
+      frames_stacked: 0,
+      reps: 0,
+      phrase: 'Inquadrati per iniziare il prossimo esercizio.'
+    });
+
     if (nextIndex >= selectedExercises.length) {
       setCurrentExerciseIndex(selectedExercises.length);
       setSelectedExercise(null);
+      setWarningMessage("");
       setSelectedTutorial(null);
       setIsCountingActive(false);
       setCountdown(null);
       setIsStartLocked(false);
+      setIsExerciseFinished(false); 
       return;
     }
+
+    if (typeof setPrediction === 'function') {
+      setPrediction({ status: 'Inattivo', reps: 0, confidence: 0 });
+    }
+
+    setIsExerciseFinished(false);    
+    setIsCountingActive(false);       
+    setCountdown(null);               
+    setWarningMessage("");            
 
     setCurrentExerciseIndex(nextIndex);
     const nextExercise = selectedExercises[nextIndex];
@@ -306,6 +370,19 @@ function ClassificationPage() {
       }
     }
 
+    try {
+      // Interrompiamo eventuali letture precedenti per evitare sovrapposizioni
+      window.speechSynthesis.cancel();
+
+      const messaggio = new SpeechSynthesisUtterance("Complimenti! Puoi passare al prossimo esercizio");
+      messaggio.lang = 'it-IT'; // Imposta la lingua in italiano
+      messaggio.rate = 1.0;     // Velocità di lettura normale
+
+      window.speechSynthesis.speak(messaggio);
+    } catch (error) {
+      console.error("Errore durante la riproduzione del TTS:", error);
+    }
+
     const t = setTimeout(() => {
       setIsCompletedVisible(false);
       advanceToNextExercise();
@@ -319,6 +396,14 @@ function ClassificationPage() {
   imposta l'esercizio selezionato e carica il video tutorial corrispondente se presente*/
   const handleExerciseSelect = (exercise) => {
     if (exercise && exercise.id && exercise.nome) {
+      setPrediction({
+        status: 'Inattivo',
+        exercise: '',
+        confidence: 0,
+        frames_stacked: 0,
+        reps: 0,
+        phrase: 'Inquadrati per iniziare il prossimo esercizio.'
+      });
       setSelectedExercise(exercise);
       setCurrentExerciseStarted(false);
       setIsExerciseFinished(false);
@@ -338,6 +423,32 @@ function ClassificationPage() {
     setIsStartLocked(true);
     setCountdown(5);
   };
+  
+  useEffect(() => {
+    // Controlliamo che l'oggetto esista e abbia la proprietà 'descrizione'
+    if (!selectedExercise || !selectedExercise.descrizione) return;
+
+    // Interrompe qualsiasi riproduzione vocale in corso
+    window.speechSynthesis.cancel();
+
+    // Prepariamo la frase prendendo i dati direttamente dall'oggetto
+    const nomeEsercizio = selectedExercise.nome;
+    const descrizioneEsercizio = selectedExercise.descrizione;
+    
+    const testoDaLeggere = `Esercizio selezionato: ${nomeEsercizio}. Descrizione: ${descrizioneEsercizio}`;
+
+    const utterance = new SpeechSynthesisUtterance(testoDaLeggere);
+    utterance.lang = 'it-IT'; // Forza la lingua italiana
+    utterance.rate = 1.0;     // Velocità di lettura normale
+
+    // Avvia la riproduzione vocale
+    window.speechSynthesis.speak(utterance);
+
+    // Pulizia: se il componente si smonta, spegne la voce
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, [selectedExercise]); // Si attiva ogni volta che cambia l'oggetto dell'esercizio
 
   const getExerciseDetails = (exerciseKey) => {
     const details = {
@@ -370,6 +481,81 @@ function ClassificationPage() {
     return details[exerciseKey] || { tool: 'Seleziona un esercizio', description: 'In attesa che l\'IA rilevi il tuo movimento...' };
   };
 
+  // Ref per memorizzare il numero precedente di ripetizioni
+  const prevRepsRef = useRef(0);
+  const playElectronicDing = () => {
+    try {
+      // Inizializza il contesto audio nativo del browser
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      // Tipo di onda (sine = suono morbido tipo campanella, triangle, square)
+      oscillator.type = 'sine'; 
+      
+      // Frequenza in Hz (880Hz è una nota alta e limpida, ottima per un feedback)
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime); 
+      
+      // Gestione del volume che sfuma rapidamente per simulare un "toc" o "ding"
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime); // Volume iniziale (30%)
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.15); // Sfuma in 0.15 secondi
+
+      // Fai partire e stoppa il suono
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.15);
+    } catch (e) {
+      console.error("Impossibile riprodurre il bip elettronico:", e);
+    }
+  };
+
+  // Monitoriamo l'aumento delle ripetizioni
+  useEffect(() => {
+    if (prediction && prediction.reps > prevRepsRef.current) {
+      console.log(`Ripetizione completata: ${prediction.reps}! Suono il bip sintetico.`);
+      
+      // Genera il suono senza bisogno di file mp3!
+      playElectronicDing();
+    }
+
+    if (prediction) {
+      prevRepsRef.current = prediction.reps;
+    }
+  }, [prediction?.reps]);
+
+  const verificaEsercizioRilevato = (exerciseRilevato, confidenceRilevata, isCountingActive) => {
+    // Se l'esercizio non è ancora iniziato attivamente, non facciamo controlli
+    if (!exerciseRilevato || !selectedExercise || !selectedExercise.nome) {
+      console.log(`${exerciseRilevato}, ${selectedExercise?.nome}`);
+      setWarningMessage("");
+      return;
+    }
+
+    // Normalizziamo i due nomi per il confronto
+    const nomeRilevato = exerciseRilevato.toLowerCase().replace(/_/g, "").replace(/\s/g, "");
+    const nomeSelezionato = selectedExercise.nome.toLowerCase().replace(/_/g, "").replace(/\s/g, "");
+
+    // Controllo di corrispondenza e confidenza (> 75%)
+    if (nomeRilevato !== nomeSelezionato && confidenceRilevata > 75) {
+      const nomeRilevatoPulito = exerciseRilevato.replace(/_/g, ' ').toUpperCase();
+      setWarningMessage(`Attenzione! Stai eseguendo: ${nomeRilevatoPulito}. Ma hai selezionato un esercizio diverso!`);
+      
+      if (!window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        const alertVoce = new SpeechSynthesisUtterance(`Attenzione, Stai eseguendo: ${nomeRilevatoPulito}. Ma hai selezionato un esercizio diverso!`);
+        alertVoce.lang = 'it-IT';
+        window.speechSynthesis.speak(alertVoce);
+      }
+    } else {
+      setWarningMessage("");
+    }
+  };
+
   // --- JSX RENDER ---
 
   return (
@@ -378,25 +564,16 @@ function ClassificationPage() {
       <div className="main-view-grid">
         {/* Pannello Webcam */}
         <div className="video-panel glass-card" style={{ flexDirection: 'column' }}>
+          {warningMessage && (
+            <div className="exercise-warning-banner" style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>
+              {warningMessage}
+            </div>
+          )}
           {/* Contenitore della webcam (parte grande) */}
           <div className="video-container" >
-            <FitnessClassifier selectedExercise={selectedExercise} />
+            <FitnessClassifier selectedExercise={selectedExercise} onCheckExercise={verificaEsercizioRilevato} isCountingActive={isCountingActive} isExerciseFinished={isExerciseFinished}/>
           </div>
 
-          {/* Contenitore pulsanti (parte piccola) */}
-          <div className="video-controls">
-
-
-            {isCompletedVisible && (
-              <div className="completed-message" >
-                Complimenti!
-              </div>
-            )}
-            
-          </div>
-          
-        
-        
         </div>
 
         {/* PANNELLO TUTORIAL CON VISIBILITÀ CONDIZIONALE */}
@@ -417,17 +594,23 @@ function ClassificationPage() {
         {/* Pannello Ripetizioni ed Esercizio */}
         <div id="reps-panel" className="info-card glass-card">
           <div className="exercise-details">
-            <h3>Esercizio Rilevato:</h3>
+            <h3>Esercizio Scelto:</h3>
             <span className="exercise-detected-name">
-              {predictedExercise ? predictedExercise.replace(/_/g, ' ').toUpperCase() : "In attesa..."}
-              {confidence > 0 && ` (${confidence}%)`}
+              {selectedExercise && selectedExercise.nome ? selectedExercise.nome.toUpperCase() : "Nessuno"}              
+            </span>
+            <h3>Strumento da usare:</h3> 
+            <span>
+              {predictedExercise && getExerciseDetails(predictedExercise)
+              ? getExerciseDetails(predictedExercise).tool 
+              : "Nessuno"}
             </span>
             
-            <h3>Strumento da usare:</h3> 
-            <span>{getExerciseDetails(predictedExercise).tool}</span>
-            
             <h3>Descrizione:</h3>
-            <p>{getExerciseDetails(predictedExercise).description}</p>
+            <p>
+              {selectedExercise && selectedExercise.descrizione 
+              ? selectedExercise.descrizione 
+              : "Seleziona un esercizio e mettiti in posizione per iniziare."}            
+            </p>
           </div>
 
           {/* Visualizzazione gigante del contatore IA */}
@@ -485,7 +668,6 @@ function ClassificationPage() {
                   setIsFeedbackModalVisible(true);
                 } else {
                   // Qui gestisci cosa succede quando c'è scritto "Salta Esercizio"
-                  // Ad esempio, puoi passare direttamente all'esercizio successivo senza mostrare il modale
                   advanceToNextExercise(); 
                 }
               }}>

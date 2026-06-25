@@ -1,0 +1,119 @@
+/* Contenitore esterno del buffer */
+.buffer-wrapper {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 4px; /* Lascia un piccolo margine interno laterale */
+    margin-top: 6px;
+}
+
+/* Sfondo grigio della barra di caricamento */
+.buffer-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    height: 10px; /* Altezza standard su PC */
+    overflow: hidden;
+}
+
+/* Riempimento arancione */
+.buffer-bar-fill {
+    background-color: #ff9800;
+    height: 100%;
+    transition: width 0.1s ease-in-out;
+}
+
+/* Overlay Base (Desktop) */
+.classifier-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+.classifier-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.classifier-exercise-title {
+    margin: 0;
+    color: #212529;
+    font-size: 20px;
+    font-weight: 700;
+    flex: 1;
+}
+
+.classifier-confidence-badge {
+    font-size: 24px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+/* Sfondo grigio della barra di caricamento (integrato nel foglio stile) */
+.buffer-bar-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    height: 10px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.buffer-bar-fill {
+    background-color: #ff9800;
+    height: 100%;
+    transition: width 0.1s ease-in-out;
+}
+
+/* =================================================
+   MEDIA QUERIES - OTTIMIZZAZIONE OVERLAY PER MOBILE
+   ================================================= */
+@media (max-width: 768px) {
+    .classifier-overlay {
+        bottom: 10px;    /* Avvicina l'overlay al bordo inferiore */
+        left: 10px;      /* Riduce il distacco laterale sinistro */
+        right: 10px;     /* Riduce il distacco laterale destro */
+        padding: 10px;   /* Rimpicciolisce l'altezza interna del box bianco */
+        border-radius: 8px;
+    }
+
+    .classifier-header-row {
+        gap: 8px;
+    }
+
+    .classifier-exercise-title {
+        font-size: 15px !important; /* Testo dell'esercizio più piccolo */
+    }
+
+    .classifier-confidence-badge {
+        font-size: 17px !important; /* Percentuale più piccola */
+    }
+
+    .buffer-bar-container {
+        height: 6px;        /* Barra di caricamento arancione molto più sottile */
+        margin-top: 4px;
+    }
+    /* Rimpicciolisce l'altezza della barra di caricamento su cellulare */
+    .buffer-bar-container {
+        height: 6px; 
+    }
+    
+    /* Riduce leggermente i testi del FitnessClassifier per non farlo scoppiare */
+    .buffer-wrapper + div h2, 
+    [style*="fontSize: '20px'"] {
+        font-size: 16px !important;
+    }
+    
+    [style*="fontSize: '24px'"] {
+        font-size: 18px !important;
+    }
+}
