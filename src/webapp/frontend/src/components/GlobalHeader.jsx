@@ -66,6 +66,7 @@ const GlobalHeader = () => {
       {isAuthenticated && (
         <div className="header-buttons">
           <Link to="/" className="back-button" style={{ backgroundColor:`color-mix(in srgb, ${backgroundColor}, #000000 35%)` }}>Home</Link>
+          <Link to="/opzioni" className="back-button" style={{ backgroundColor:`color-mix(in srgb, ${backgroundColor}, #000000 35%)` }} title="Opzioni visualizzazione">&#9881;</Link>
 
           {localStorage.getItem('token') ? (
             <div className="profile-wrap" ref={menuRef}>

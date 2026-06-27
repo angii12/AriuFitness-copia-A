@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import './ExerciseListPage.css'; // Creeremo questo file per lo stile
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,8 @@ function ExerciseListPage() {
 
   const [selectedExerciseDetails, setSelectedExerciseDetails] = useState(null);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+
+  const startBttnRef = useRef(null);
 
   // Carica gli esercizi dal database
   useEffect(() => {
@@ -174,7 +176,7 @@ function ExerciseListPage() {
               )}
             </div>
 
-            <div className='start-bttn'>
+            <div className='start-bttn' ref={startBttnRef}>
               <button
                 type="button"
                 onClick={() =>
@@ -188,6 +190,15 @@ function ExerciseListPage() {
             </div>
           </div>
           
+          <div className="video-panel-wrapper">
+            {addedExercises.length > 0 && (
+              <button
+                className="scroll-to-start-hint"
+                onClick={() => startBttnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
+              >
+                &#8595; Scorri in fondo per avviare l'allenamento
+              </button>
+            )}
           <div className="video-player-panel">
             {/* --- CONDIZIONE CORRETTA: usa videoUrl --- */}
             {videoUrl ? (
@@ -242,6 +253,7 @@ function ExerciseListPage() {
                 <p>Seleziona un esercizio dalla lista per vedere il tutorial.</p>
               </div>
             )}
+          </div>
           </div>
         </div>        )}
         

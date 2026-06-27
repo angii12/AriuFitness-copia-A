@@ -9,6 +9,7 @@ function HomePage() {
   
   // Stato per gestire quale card è aperta
   const [activeCardId, setActiveCardId] = useState(null);
+  const [loadingProgramId, setLoadingProgramId] = useState(null);
 
   // --- STATO PER L'ETÀ DELL'UTENTE ---
   const [eta, setEta] = useState(null);
@@ -75,9 +76,15 @@ function HomePage() {
       immagine: "/salute-delle-articolazioni.png",
       allenamenti: [
         "Braccia con miniball", 
-        "Lateral flexion con la fitball"
+        "Lateral flexion con la fitball",
+        "Flessioni frontali delle braccia",
+        "Inclinazione laterale del tronco",
+        "Sollevamento frontale delle braccia",
+        "Sollevamento sulle punte dei piedi",
+        "Squat con palla al petto",
+        "Flessione del busto in avanti"
       ],
-      descrizione: "2 esercizi - 15 minuti di allenamento"
+      descrizione: "9 esercizi - 30 minuti di allenamento"
     },
     { 
       id: 5, 
@@ -162,26 +169,34 @@ function HomePage() {
     setActiveCardId(prevId => prevId === id ? null : id);
   };
 
-  // --- FUNZIONE PER SALVARE GLI ESERCIZI NEL LOCAL STORAGE ---
-  const handleStartWorkout = (allenamenti, titoloProgramma) => {
+  // --- FUNZIONE PER CARICARE GLI ESERCIZI DA SUPABASE E AVVIARE L'ALLENAMENTO ---
+  const handleStartWorkout = async (allenamenti, programId) => {
+    if (loadingProgramId !== null) return;
+    setLoadingProgramId(programId);
     try {
-      // Salviamo l'array degli esercizi trasformandolo in stringa
-      localStorage.setItem('allenamentiSelezionati', JSON.stringify(allenamenti));
-      
-      // Opzionale: puoi salvare anche il titolo del programma se ti serve nella pagina successiva
-      localStorage.setItem('programmaAttivo', titoloProgramma);
-      
-      console.log(`Allenamento "${titoloProgramma}" avviato e salvato nel localStorage!`);
+      const { data, error } = await supabase
+        .from('esercizi')
+        .select('*')
+        .in('nome', allenamenti);
 
+      if (error) throw error;
+
+      // Rispetta l'ordine originale del programma
+      const ordered = allenamenti
+        .map(nome => data.find(e => e.nome === nome))
+        .filter(Boolean);
+
+      localStorage.setItem('selectedExercises', JSON.stringify(ordered));
       navigate('/allenamento');
     } catch (error) {
-      console.error("Errore nel salvataggio in localStorage:", error);
+      console.error("Errore nel caricamento degli esercizi:", error);
+    } finally {
+      setLoadingProgramId(null);
     }
   };
 
   return (
     <div className="home-container" style={{ backgroundColor }}>
-      
       <div className="panels-grid">
         {programmiOrdinati.map((prog) => {
           const isOpen = activeCardId === prog.id;
@@ -203,11 +218,12 @@ function HomePage() {
 
               {/* Bottone in fondo full-width */}
               <div className="bttn-container">
-              <button 
+                <button
                   className="panel-button"
-                  onClick={() => handleStartWorkout(prog.allenamenti, prog.titolo)}
+                  onClick={() => handleStartWorkout(prog.allenamenti, prog.id)}
+                  disabled={loadingProgramId !== null}
                 >
-                  Start
+                  {loadingProgramId === prog.id ? '...' : 'Start'}
                 </button>
               </div>
             </div>

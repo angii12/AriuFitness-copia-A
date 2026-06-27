@@ -6,10 +6,8 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: auto;
+    overflow: hidden;
     border-radius: 12px 12px 0 0;
-    min-height: clamp(250px, 50vh, 500px);
-    max-height: clamp(300px, 60vh, 600px);
 }
 
 .video-container canvas {
@@ -39,48 +37,7 @@
     background: #0c6b1e;
 }
 
-.exercise-info-overlay{
-    position: absolute;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-    padding: clamp(6px, 1.5vw, 8px) clamp(15px, 3vw, 20px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    width: fit-content;
-    white-space: nowrap;
-    max-width: 90vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.exercise-name { font-weight: 800; font-size: clamp(0.9rem, 2vw, 1.1rem); color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.5px; }
-.exercise-target{ font-size: clamp(0.75rem, 1.5vw, 0.85rem); font-weight: 600; opacity: 0.8; color: #333; }
-
-.video-controls {  
-    align-items: center;    
-    padding: clamp(12px, 2.5vw, 16px); 
-    display: flex; 
-    flex-direction: row; 
-    gap: clamp(8px, 1.5vw, 12px); 
-    border-top: 1px solid rgba(0,0,0,0.1);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.completed-message { font-weight: 900; color: #2a9d8f; text-align: center; font-size: clamp(0.9rem, 2vw, 1rem); }
-.webcam-warning { font-weight: 800; color: #e76f51; text-align: center; font-size: clamp(0.9rem, 2vw, 1rem); }
-
 .info-card{height: stretch;}
-.info-card-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.info-card-title h3 { margin: 0; font-size: clamp(0.9rem, 2vw, 1.1rem); }
-.info-card-title span { opacity: 0.85; font-weight: 700; font-size: clamp(0.75rem, 1.5vw, 0.9rem); }
-
-.reps-buttons { display: flex; gap: clamp(8px, 1.5vw, 10px); justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 
 #workout-list-panel p{ margin-top: 8px; opacity: 0.85; font-size: clamp(0.85rem, 1.8vw, 0.95rem); }
 
@@ -88,45 +45,126 @@
 
 .continue-buttons { display: flex; gap: clamp(10px, 2vw, 12px); justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 
-/* Forza i dettagli dell'esercizio ad andare a capo verticalmente */
-.exercise-details {
-    display: flex !important;
-    flex-direction: column !important; /* Mette ogni blocco uno sotto l'altro */
-    align-items: flex-start !important;
-    gap: 12px; 
-    width: 100%;
-    box-sizing: border-box;
-    padding: 15px;
-    text-align: left;
-}
-
-/* Opzionale: per dare una struttura ancora più pulita a "Titolo: Contenuto" */
-.exercise-details h3 {
-    margin: 8px 0 2px 0;
-    text-transform: uppercase;
-    display: block; /* Garantisce che si comporti come un blocco unico */
-    width: 100%;
-}
-
-.exercise-details span, 
-.exercise-details p {
-    margin: 0 0 10px 0;
-    font-size: clamp(0.85rem, 1.8vw, 1rem) !important;
-    color: #444;
-    line-height: 1.4;
-    display: block;
-    width: 100%;
-    white-space: normal; /* Impedisce al testo di rimanere su una sola riga */
-    word-break: break-word; /* Spezza le parole se troppo lunghe */
-}
-
 #tutorial-panel .video-container video {
     width: 100%;
     height: 100%;
-    max-width: -webkit-fill-available; 
+    max-width: -webkit-fill-available;
     max-height: inherit;
-    object-fit: contain; /* Mantiene le proporzioni corrette del video senza tagliarlo */
+    object-fit: cover;
     display: block;
+}
+
+/* =================================
+   AVVISO MODELLO NON DISPONIBILE
+   ================================= */
+.no-model-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px);
+    font-size: clamp(0.82rem, 2.2vw, 0.93rem);
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 12px;
+    line-height: 1.45;
+}
+
+/* =================================
+   MODALITÀ DIVISO
+   ================================= */
+
+/* In modalità diviso i pannelli sono sempre in colonna (webcam sopra, tutorial sotto) */
+.main-view-grid--diviso {
+    flex-direction: column !important;
+}
+
+/* Modalità diviso: entrambi i pannelli diventano quadrati */
+.main-view-grid--diviso #webcam-panel {
+    aspect-ratio: 1 / 1 !important;
+}
+
+.tutorial-panel--diviso {
+    aspect-ratio: 1 / 1 !important;
+}
+
+/* object-fit: cover + object-position: center ritaglia equamente sopra e sotto */
+.tutorial-panel--diviso .video-container video {
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+/* =================================
+   OVERLAY CALIBRAZIONE
+   Nessuno sfondo opaco: la webcam rimane visibile sopra
+   ================================= */
+.calibration-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px clamp(20px, 5vh, 40px);
+    pointer-events: none; /* lascia passare i clic al di sopra */
+}
+
+.calibration-content {
+    pointer-events: auto;
+    text-align: center;
+    max-width: min(420px, 92vw);
+    width: 100%;
+    background: rgba(255, 255, 255, 0.97) !important;
+    border-radius: 20px !important;
+    padding: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 28px) !important;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.18),
+                0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+.calibration-icon {
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+    margin: 0 0 4px 0;
+    line-height: 1;
+}
+
+.calibration-title {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.calibration-message {
+    font-size: clamp(0.82rem, 2.2vw, 0.93rem);
+    color: #555;
+    line-height: 1.5;
+    margin: 0 0 14px 0;
+}
+
+/* Puntini animati - indicano l'attesa della detection */
+.calibration-scanning {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.calibration-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--colorvar, #5b120f);
+    animation: calibration-pulse 1.4s ease-in-out infinite;
+}
+
+.calibration-dot:nth-child(2) { animation-delay: 0.22s; }
+.calibration-dot:nth-child(3) { animation-delay: 0.44s; }
+
+@keyframes calibration-pulse {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.75); }
+    40%           { opacity: 1;    transform: scale(1); }
 }
 
 
@@ -149,58 +187,19 @@
     .video-container {
         min-height: 280px;
     }
-    
-    .video-controls {
-        padding: clamp(14px, 3vw, 18px);
-        gap: clamp(10px, 2vw, 15px);
-    }
 }
 
 @media (max-width: 480px) {
     .video-container {
         min-height: 250px;
-        overflow: visible;
-    }
-    
-    .video-controls {
-        padding: clamp(12px, 2.5vw, 16px);
-        gap: clamp(8px, 2vw, 12px);
-    }
-    
-    .exercise-info-overlay {
-        top: 10px;
-        font-size: 0.85rem;
+        overflow: hidden;
     }
 
     .modal-content {
-        width: 80%; 
+        width: 80%;
     }
 
     .feedback-faces{
         gap: 4px;
     }
-
-    .exercise-details {
-        display: flex;
-        flex-direction: column; /* Forza gli elementi uno sotto l'altro */
-        gap: 8px;
-        width: 100%;
-        text-align: left;
-        box-sizing: border-box;
-        padding: 10px;
-    }
-
-    .exercise-details h3 {
-        margin: 10px 0 2px 0;
-        font-size: clamp(0.9rem, 2vw, 1.1rem);
-        text-transform: uppercase;
-        color: #555;
-    }
-
-    .exercise-details span, .exercise-details p {
-        margin: 0;
-        font-size: clamp(0.85rem, 1.8vw, 1rem);
-        line-height: 1.4;
-        word-break: break-word; /* Evita che il testo esca dallo schermo */
-}
 }

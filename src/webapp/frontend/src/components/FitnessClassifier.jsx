@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { usePrediction } from '../context/PredictionContext';
 import './FitnessClassifier.css';
 
-const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive, isExerciseFinished }) => {
+const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinished, tutorialUrl, tutorialMode = 'sovrapposizione', reps, targetReps, ttsEnabled = true }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
   const intervalRef = useRef(null);
+  const tutorialOverlayRef = useRef(null);
 
   const { prediction, setPrediction } = usePrediction();
 
@@ -21,20 +22,17 @@ const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive
     wsRef.current = new WebSocket('ws://localhost:8000/ws/stream');
 
     wsRef.current.onopen = () => {
-      setServerStatus({ text: 'Rete AI Attiva ⚡', color: '#28a745' });
+      setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
       const exerciseKey = selectedExercise?.nome
         ?.toLowerCase()
         .replace(/ /g, '_');
-      wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey }));
+      wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey, llm_enabled: ttsEnabled }));
       startWebcam();
     };
 
     wsRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setPrediction(data);
-      if (onCheckExercise) {
-        onCheckExercise(data.exercise, data.confidence, isCountingActive);
-      }
     };
 
     wsRef.current.onclose = () => {
@@ -52,6 +50,16 @@ const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive
       if (wsRef.current) wsRef.current.close();
     };
   }, [selectedExercise]);
+
+  useEffect(() => {
+    if (!tutorialOverlayRef.current) return;
+    if (isCountingActive && tutorialUrl) {
+      tutorialOverlayRef.current.play().catch(() => {});
+    } else {
+      tutorialOverlayRef.current.pause();
+      tutorialOverlayRef.current.currentTime = 0;
+    }
+  }, [isCountingActive, tutorialUrl]);
 
   useEffect(() => {
     if (isExerciseFinished) {
@@ -80,7 +88,7 @@ const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive
       }
     } catch (err) {
       console.error("Errore webcam:", err);
-      setServerStatus({ text: 'Webcam non trovata 📷', color: '#dc3545' });
+      setServerStatus({ text: 'Webcam non trovata', color: '#dc3545' });
     }
   };
 
@@ -114,73 +122,115 @@ const FitnessClassifier = ({ selectedExercise, onCheckExercise, isCountingActive
     return name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
 
-  // Determina il colore del box in base alla confidenza dell'algoritmo
+  // Mostra la confidence solo se l'esercizio rilevato coincide con quello selezionato
+  const normalizeName = (name) =>
+    (name || '').toLowerCase().replace(/_/g, '').replace(/\s/g, '');
+
+  const isCorrectExercise =
+    selectedExercise &&
+    prediction.exercise &&
+    normalizeName(prediction.exercise) === normalizeName(selectedExercise.nome);
+
+  const displayConfidence = isCorrectExercise ? prediction.confidence : 0;
+
   const getConfidenceColor = (conf) => {
-    if (conf > 80) return '#28a745'; // Verde: Sicuro
-    if (conf > 50) return '#ffc107'; // Giallo: Incerto
-    return '#6c757d'; // Grigio: Nessun dato affidabile
+    if (conf > 80) return '#28a745';
+    if (conf > 50) return '#ffc107';
+    return '#6c757d';
+  };
+
+  const getBorderColor = (conf) => {
+    if (!isCountingActive) return 'transparent';
+    if (conf > 80) return '#28a745';
+    if (conf >= 50) return '#ffc107';
+    return '#dc3545';
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '16px', width: '100%', height: '100%', boxSizing: 'border-box' }}>
-      
-      
+    <>
+    <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: `3px solid ${getBorderColor(displayConfidence)}`,
+          transition: 'border-color 0.4s ease',
+          overflow: 'hidden',
+          boxSizing: 'border-box',}}>
 
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        justifyContent: 'flex-start', 
-        gap: '0px', 
-        width: '100%',
-        flex: 1,
-        minHeight: 0
-      }}>
-        
-        {/* Box Webcam con overlay */}
-        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', width: '100%', flex: 1, minHeight: 0 }}>
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ width: '100%', height: '100%', display: 'block', transform: 'scaleX(-1)', objectFit: 'cover' }}
-          />
-          <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-          
-          {/* Overlay Pannello Dati - Posizionato sopra il video */}
-          <div className="classifier-overlay">
-            <div>
-              <div style={{ marginBottom: '12px' }}>
-                <div className="classifier-header-row">
-                  <h2 className="classifier-exercise-title">
-                    {formatExerciseName(prediction.exercise)}
-                  </h2>
-                  {prediction.status !== 'buffering' && (
-                    <span className="classifier-confidence-badge" style={{ 
-                      color: getConfidenceColor(prediction.confidence),
-                    }}>
-                      {prediction.confidence}%
-                    </span>
-                  )}
-                </div>
-              </div>
+      {/* Box Webcam con overlay */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{
+          position: 'absolute', top: 0, left: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          transform: 'scaleX(-1)',
+        }}
+      />
+      <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
 
-              {/* Visualizzazione Avanzamento Buffer */}
-              {prediction.status === 'buffering' && (
-                <div className="buffer-wrapper">
-                  <div className="buffer-bar-container">
-                    <div className="buffer-bar" style={{ 
-                      width: `${(prediction.frames_stacked / 8) * 100}%`, 
-                    }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Overlay Video Tutorial - solo in modalità sovrapposizione */}
+      {tutorialUrl && tutorialMode === 'sovrapposizione' && (
+        <video
+          ref={tutorialOverlayRef}
+          key={tutorialUrl}
+          src={tutorialUrl}
+          loop
+          muted
+          playsInline
+          className={`tutorial-overlay-video${isCountingActive ? ' tutorial-overlay-video--active' : ''}`}
+        />
+      )}
+
+      {/* Overlay Header in alto - nome esercizio e reps */}
+      {selectedExercise && isCountingActive && (
+        <div className="exercise-header-overlay">
+          <span className="exercise-header-name">
+            {selectedExercise.nome?.toUpperCase()}
+          </span>
+          <span className="exercise-header-reps">
+            {reps} / {targetReps}
+          </span>
         </div>
+      )}
 
-      </div>
+      {/* Confidence in basso a sinistra - solo durante l'esercizio e solo se corretto */}
+      {isCountingActive && (
+        <div className="confidence-badge-overlay">
+          <span style={{ color: getConfidenceColor(displayConfidence) }}>
+            {displayConfidence}%
+          </span>
+        </div>
+      )}
+
+      {/* Messaggio di posizionamento + barra buffer - overlay assoluto in alto */}
+      {!isCountingActive && prediction.exercise && (
+        <div className="top-status-overlay">
+          <div className={`positioning-message${prediction.status === 'no_model' ? ' positioning-message--no-model' : ''}`}>
+            {formatExerciseName(prediction.exercise)}
+          </div>
+          {prediction.status === 'buffering' && (
+            <div className="buffer-progress-wrapper">
+              <div
+                className="buffer-progress-bar"
+                style={{
+                  width: `${Math.min(
+                    ((prediction.frames_stacked || 0) / (prediction.max_frames || 43)) * 100,
+                    100
+                  )}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
+    </>
   );
 };
 

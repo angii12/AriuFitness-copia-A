@@ -1,0 +1,229 @@
+/* ===================================
+   OPZIONI PAGE
+   =================================== */
+
+.opzioni-container {
+  min-height: 100vh;
+  padding: calc(70px + clamp(20px, 5vw, 32px)) clamp(16px, 4vw, 28px)
+    clamp(30px, 6vw, 50px);
+  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.opzioni-wrapper {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* --- Titolo pagina --- */
+.opzioni-heading {
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 800;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  margin: 0;
+  letter-spacing: 3px;
+}
+
+/* --- Sezione --- */
+.opzioni-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.opzioni-section-title {
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.opzioni-section-desc {
+  font-size: clamp(0.8rem, 2.5vw, 0.92rem);
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* --- Lista modalità --- */
+.opzioni-modalita-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opzioni-modalita-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: clamp(14px, 3.5vw, 20px) clamp(16px, 4vw, 22px);
+  border-radius: 16px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2.5px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.18s ease;
+  outline: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.opzioni-modalita-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
+}
+
+.opzioni-modalita-card:focus-visible {
+  outline: 3px solid var(--colorvar, #5b120f);
+  outline-offset: 2px;
+}
+
+.opzioni-modalita-card--attiva {
+  border-color: var(--colorvar, #5b120f);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+}
+
+/* Testo dentro la card */
+.opzioni-modalita-testo {
+  flex: 1;
+}
+
+.opzioni-modalita-testo h3 {
+  font-size: clamp(0.88rem, 2.5vw, 1rem);
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+}
+
+.opzioni-modalita-testo p {
+  font-size: clamp(0.76rem, 2vw, 0.86rem);
+  color: #555;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Radio button custom */
+.opzioni-modalita-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  position: relative;
+}
+
+.opzioni-modalita-radio--selezionato {
+  border-color: var(--colorvar, #5b120f);
+  background: var(--colorvar, #5b120f);
+}
+
+.opzioni-modalita-radio--selezionato::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* --- Toggle switch (Feedback Vocale) --- */
+.opzioni-toggle-switch {
+  width: 50px;
+  height: 28px;
+  border-radius: 14px;
+  background: #ccc;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.25s ease;
+}
+
+.opzioni-toggle-switch--on {
+  background: var(--colorvar, #5b120f);
+}
+
+.opzioni-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease;
+}
+
+.opzioni-toggle-switch--on .opzioni-toggle-thumb {
+  transform: translateX(22px);
+}
+
+/* --- Bottone Salva --- */
+.opzioni-salva-btn {
+  width: 100%;
+  padding: clamp(14px, 3.5vw, 18px);
+  background: #ffffff;
+  color: var(--colorvar, #5b120f);
+  border: none;
+  border-radius: 50px;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.5px;
+}
+
+.opzioni-salva-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+
+.opzioni-salva-btn:active {
+  transform: translateY(0);
+}
+
+/* --- Media Queries --- */
+
+@media (min-width: 768px) {
+  .opzioni-wrapper {
+    max-width: 600px;
+    gap: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .opzioni-container {
+    padding-top: calc(60px + 16px);
+  }
+
+  .opzioni-modalita-card {
+    gap: 10px;
+  }
+
+  .opzioni-modalita-radio {
+    width: 20px;
+    height: 20px;
+  }
+
+  .opzioni-modalita-radio--selezionato::after {
+    width: 7px;
+    height: 7px;
+  }
+}

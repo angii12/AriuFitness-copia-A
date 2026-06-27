@@ -3,10 +3,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.env
 .DS_Store
 *.pt
-*.pth
 *.h5
 *.ckpt
+*.md
 

@@ -9,13 +9,6 @@ else:
     # Siamo sul PC locale (aggiusta questo percorso se necessario)
     BASE_PATH = 'C:/Users/renat/Documents/Git/AriuFitness'
 
-def getDatasetPath():
-    # Assicurati che la cartella esista
-    path = os.path.join(BASE_PATH, 'dataset')
-    if not os.path.exists(path):
-        os.makedirs(path)
-    return path
-
 def getModelsPath():
     """
     Funzione che restituisce il percorso della cartella dei modelli

@@ -1,22 +1,87 @@
 import os
 import json
+import asyncio
+import time
 import base64
-import collections
 import cv2
 import numpy as np
 import torch
-import torch.nn as float
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from groq import AsyncGroq
 
-# --- IMPORTA LA TUA LOGICA ORIGINALE ---
 from logic import util, reps_tracker
-from models_pytorch import MultiInputLSTM, device 
-from frame import Frame 
+from models_pytorch import MultiInputLSTM, device
+from frame import Frame
 
-SKIP_INTERVAL = 6      # Campiona un frame ogni 6 (pari a circa ~0.2 secondi di salto)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-tracker = reps_tracker.ExerciseTracker()
+SKIP_INTERVAL = 6
+
+# --- CLIENT GROQ ---
+_groq_api_key = os.getenv("GROQ_API_KEY")
+groq_client = AsyncGroq(api_key=_groq_api_key) if _groq_api_key else None
+if not groq_client:
+    print("⚠️  GROQ_API_KEY non trovata: il feedback vocale LLM è disabilitato.")
+
+CORRECTION_COOLDOWN = 5    # secondi minimi tra feedback correttivi
+LLM_INTERVAL = 15          # secondi tra feedback motivazionali
+DEFAULT_TARGET_REPS = 5
+
+_SYSTEM_PROMPT_CORREZIONE = (
+    "Sei un trainer fitness. Riformula il messaggio di correzione che ti viene dato in modo "
+    "naturale, diretto e incoraggiante in italiano. Massimo 10 parole, 1 frase. "
+    "Mantieni il significato preciso della correzione — non inventare correzioni diverse. "
+    "Varia leggermente il fraseggio rispetto alla versione originale. "
+    "Rispondi SOLO con la frase riformulata, senza saluti, emoji o prefissi."
+)
+
+_SYSTEM_PROMPT_MOTIVAZIONE = (
+    "Sei un trainer fitness. Dai un breve incoraggiamento in italiano (massimo 10 parole, 1 frase). "
+    "Incita l'utente o ricordagli le ripetizioni mancanti. "
+    "Rispondi SOLO con la frase, senza saluti, emoji o prefissi."
+)
+
+
+async def genera_feedback_llm(
+    esercizio: str,
+    angolo: float,
+    reps: int,
+    is_correcting: bool,
+    correction_phrase: str | None,
+) -> str | None:
+    if groq_client is None:
+        return None
+    try:
+        rimanenti = max(DEFAULT_TARGET_REPS - reps, 0)
+        if is_correcting and correction_phrase:
+            system_prompt = _SYSTEM_PROMPT_CORREZIONE
+            user_msg = (
+                f"Esercizio: {esercizio.replace('_', ' ')}\n"
+                f"Correzione da comunicare: \"{correction_phrase}\"\n"
+                f"Riformula questa correzione specifica in modo naturale e diretto."
+            )
+        else:
+            system_prompt = _SYSTEM_PROMPT_MOTIVAZIONE
+            user_msg = (
+                f"Esercizio: {esercizio.replace('_', ' ')}\n"
+                f"Ripetizioni completate: {reps} su {DEFAULT_TARGET_REPS} (mancano {rimanenti})\n"
+                f"Angolo rilevato: {angolo:.1f}°"
+            )
+        resp = await groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_msg},
+            ],
+            max_tokens=30,
+            temperature=0.8,
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"⚠️  Groq errore: {e}")
+        return None
 
 app = FastAPI(title="Ariufitness AI Backend")
 
@@ -28,256 +93,291 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CONFIGURAZIONE E CARICAMENTO ENSEMBLE DI 6 MODELLI BINARI ---
+# --- PARAMETRI ARCHITETTURA (caricati una volta sola all'avvio) ---
 MODELS_PATH = util.getModelsPath()
 PARAMS_PATH = os.path.join(MODELS_PATH, 'best_params_3rami.npy')
 
 print("Caricamento parametri ottimali del modello a 3 rami...")
 best_param = np.load(PARAMS_PATH, allow_pickle=True).item()
 
-# Lista degli esercizi esatti (corrispondenti ai nomi dei file .pth salvati)
-esercizi = [
+# Insieme degli esercizi che dispongono di un modello addestrato
+ESERCIZI_CON_MODELLO = {
     "sollevamento_gambe_stringendo_la_fitball",
     "braccia_con_miniball",
     "roll_out_sulla_fitball",
     "medicine_ball_squat",
     "fitball_back_extensions",
-    "overhead_ball_side_bends"
-]
+    "overhead_ball_side_bends",
+}
 
-# Dizionario che conterrà le istanze dei 6 modelli pronti a lavorare
-modelli_ensemble = {}
+# Cache dei modelli già caricati: evita di rileggere il disco ad ogni cambio esercizio
+_cache_modelli: dict = {}
 
-print("Caricamento in memoria dei 6 modelli binari indipendenti...")
-for esercizio in esercizi:
-    # 1. Inizializziamo l'architettura forzando num_classes=1 (Classificazione Binaria)
-    model_binario = MultiInputLSTM(
-        input_size_1=best_param['X1_size'],
-        input_size_2=best_param['X2_size'],
-        input_size_3=best_param['X3_size'],
-        hidden_size_1=best_param['hidden_size_1'],
-        hidden_size_2=best_param['hidden_size_2'],
-        hidden_size_3=best_param['hidden_size_3'],
-        num_classes=1, # <--- 1 solo output per modello binario
-        dropout_rate=best_param['dropout_rate']
+
+def carica_modello(nome_esercizio: str):
+    """
+    Carica il modello binario per l'esercizio richiesto.
+    Usa la cache in-memory per evitare ricaricamenti da disco.
+    Restituisce il modello PyTorch pronto all'inferenza, oppure None
+    se il file .pth non esiste.
+    """
+    if nome_esercizio in _cache_modelli:
+        return _cache_modelli[nome_esercizio]
+
+    weights_path = os.path.join(MODELS_PATH, f"LSTM_Binario_{nome_esercizio}.pth")
+    if not os.path.exists(weights_path):
+        return None
+
+    print(f"  → Caricamento modello per '{nome_esercizio}' da disco...")
+    modello = MultiInputLSTM(
+        input_size_1=best_param["X1_size"],
+        input_size_2=best_param["X2_size"],
+        input_size_3=best_param["X3_size"],
+        hidden_size_1=best_param["hidden_size_1"],
+        hidden_size_2=best_param["hidden_size_2"],
+        hidden_size_3=best_param["hidden_size_3"],
+        num_classes=1,
+        dropout_rate=best_param["dropout_rate"],
     ).to(device)
 
-    # 2. Carichiamo i pesi specifici salvati durante la Fase 3
-    weights_path = os.path.join(MODELS_PATH, f'LSTM_Binario_{esercizio}.pth')
-    model_binario.load_state_dict(torch.load(weights_path, map_location=device))
-    model_binario.eval() # Modalità inferenza
-    
-    # 3. Salviamo il modello nel nostro dizionario
-    modelli_ensemble[esercizio] = model_binario
+    modello.load_state_dict(torch.load(weights_path, map_location=device))
+    modello.eval()
 
-print("Tutti e 6 i modelli binari sono stati caricati e sono pronti!")
+    _cache_modelli[nome_esercizio] = modello
+    print(f"  ✓ Modello '{nome_esercizio}' pronto (memorizzato in cache).")
+    return modello
 
-# --- GESTIONE DEL FLUSSO WEBSOCKET CON BUFFER MEMORIA ---
+
+# --- WEBSOCKET ---
 @app.websocket("/ws/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    print("Client React connesso al canale WebSocket!")
+    print("Client connesso al canale WebSocket.")
 
-    # Reset dei contatori all'apertura di una nuova sessione
-    global tracker
     tracker = reps_tracker.ExerciseTracker()
-    
-    #MODIFICA: Usiamo una lista normale come "storico grezzo" invece del deque rigido da 8
-    raw_history_buffer = []
-    max_history_length = 50 # Contiene abbastanza frame storici per coprire il salto temporale    
-
-    # STATO INIZIALE: Il sistema attende che l'utente sia visibile per la prima volta
+    raw_history_buffer: list = []
+    max_history_length = 50
     is_fully_visible_at_start = False
 
-    selectedExercise = None  # Variabile per memorizzare l'esercizio selezionato dal client
+    selected_exercise: str | None = None
+    modello_attivo = None           # Unico modello attivo per la sessione corrente
+
+    # Stato feedback LLM (per-connessione)
+    llm_task = None
+    pending_llm_feedback: tuple | None = None
+    llm_feedback_id: int = 0
+    last_feedback_time: float = time.time()
+    llm_enabled: bool = True
+
+    # Indici MediaPipe per le principali articolazioni del corpo
+    INDICI_CORPO = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+    MIN_FRAMES = (8 - 1) * SKIP_INTERVAL + 1   # 43 frame necessari per la finestra da 8
+    SOGLIA_STASI = 0.0001
 
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
 
+            # ── Messaggio di selezione esercizio ──────────────────────────────
             if "selected_exercise" in message:
-                selected_exercise = message["selected_exercise"]
-                print(f"Esercizio selezionato dal client: {selected_exercise}")
+                nuovo = message["selected_exercise"]
+
+                if nuovo == selected_exercise:
+                    continue    # Stesso esercizio: niente da fare
+
+                selected_exercise = nuovo
+                llm_enabled = bool(message.get("llm_enabled", True))
+                print(f"\nEsercizio selezionato: '{selected_exercise}' (LLM {'ON' if llm_enabled else 'OFF'})")
+
+                # Carica il modello corrispondente (o segnala l'assenza)
+                modello_attivo = carica_modello(selected_exercise)
+                if modello_attivo is None:
+                    print(f"⚠️  AVVISO: nessun modello addestrato per '{selected_exercise}'.")
+
+                # Resetta il contesto per il nuovo esercizio
+                tracker = reps_tracker.ExerciseTracker()
+                raw_history_buffer = []
+                is_fully_visible_at_start = False
+
+                # Resetta stato feedback LLM
+                if llm_task is not None:
+                    llm_task.cancel()
+                    llm_task = None
+                pending_llm_feedback = None
+                last_feedback_time = time.time()
                 continue
 
+            # ── Frame video ───────────────────────────────────────────────────
             image_base64 = message.get("image")
-            
-            if image_base64:
-                if "," in image_base64:
-                    image_base64 = image_base64.split(",")[1]
-                
-                image_bytes = base64.b64decode(image_base64)
-                np_arr = np.frombuffer(image_bytes, dtype=np.uint8)
-                
-                # Decodifichiamo l'immagine in formato BGR (OpenCV standard)
-                frame_bgr = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                
-                if frame_bgr is None:
-                    continue
-                
-                # 1. Istanziamo la tua classe originale passandogli l'immagine
-                frame_obj = Frame(frame_bgr)
-                
-                # 2. Riproduciamo i passaggi del tuo script Dataset: interpolazione e calcoli
-                # (Dato che lavoriamo frame per frame in diretta, passiamo None per i fotogrammi adiacenti)
-                frame_obj.interpolate_keypoints(None, None)
-                frame_obj.extract_angles()
-                
-                # 3. Estraiamo i tre vettori di feature
-                kp_data = frame_obj.process_keypoints()   # Ramo 1
-                an_data = frame_obj.process_angles()      # Ramo 2
-                ball_data = frame_obj.process_only_ball() # Ramo 3
+            if not image_base64:
+                continue
 
-                # --- NUOVO CONTROLLO MIRATO SUGLI EXERCISE KEYPOINTS ---
-                landmarks_mediapipe = frame_obj.get_landmarks()
-                
-                # Indici MediaPipe per: spalle, gomiti, polsi, anche, ginocchia, caviglie/piedi
-                indici_richiesti = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
-                                
-                # Se non siamo ancora partiti ufficialmente, facciamo il controllo severo
-                if not is_fully_visible_at_start:
-                    corpo_visibile = True
-                    if not landmarks_mediapipe:
-                        corpo_visibile = False
-                    else:
-                        for idx in indici_richiesti:
-                            if idx >= len(landmarks_mediapipe) or landmarks_mediapipe[idx].visibility < 0.5:
-                                corpo_visibile = False
-                                break
-                    
-                    if not corpo_visibile:
-                        response = {
-                            "status": "buffering",
-                            "frames_stacked": len(raw_history_buffer),
-                            "exercise": "Allontanati e inquadra il corpo",
-                            "confidence": 0.0,
-                            "reps": tracker.get_reps(),
-                            "phrase": "Posizionati nella tua postazione in modo da mostrare tutte le articolazioni."
-                        }
-                        await websocket.send_text(json.dumps(response))
-                        continue # Salta il frame e non riempie il buffer iniziale
-                    else:
-                        # SBLOCCO: L'utente si è posizionato correttamente per la prima volta!
-                        is_fully_visible_at_start = True
-                        print("Utente posizionato correttamente. Sistema di riconoscimento sbloccato!")
-                
-                # Se MediaPipe si perde completamente un frame a causa di un'occlusione estrema durante il movimento, 
-                # facciamo solo un check di sopravvivenza per non far crashare i calcoli successivi
-                if not landmarks_mediapipe:
-                    continue
-                # -------------------------------------------------------------------------------------                
-                # 4. Salviamo questa terna nel nostro buffer temporaneo
-                raw_history_buffer.append((kp_data, an_data, ball_data))
-
-                # Se lo storico cresce troppo, eliminiamo il frame più vecchio
-                if len(raw_history_buffer) > max_history_length:
-                    raw_history_buffer.pop(0)
-
-                # Calcoliamo la lunghezza minima della cronologia necessaria per estrarre 8 frame a salti
-                # Es: Con 8 frame richiesti e SKIP_INTERVAL=6, servono almeno (7 * 6) + 1 = 43 frame accumulati
-                min_frames_required = (8 - 1) * SKIP_INTERVAL + 1
-                
-                # 5. MODIFICA: Se non abbiamo abbastanza cronologia di frame, chiediamo a React di fare buffering
-                if len(raw_history_buffer) < min_frames_required:
-                    response = {
-                        "status": "buffering",
-                        "frames_stacked": len(raw_history_buffer),
-                        "exercise": "In attesa di dati...",
-                        "confidence": 0.0,
-                        "reps": 0,
-                        "phrase": f"Inizializzazione della telecamera... ({len(raw_history_buffer)}/{min_frames_required})"
-                    }
-                    await websocket.send_text(json.dumps(response))
-                    continue
-
-                # 6.MODIFICA: Campionamento a salti equidistanti (Stesso comportamento del Dataset!)
-                # Partiamo dall'ultimo frame inserito (-1) e andiamo a ritroso estraendo un frame ogni SKIP_INTERVAL
-                sampled_window = raw_history_buffer[-1 : -min_frames_required - 1 : -SKIP_INTERVAL]
-                
-                # Ripristiniamo l'ordine cronologico corretto (da più vecchio a più recente)
-                sampled_window.reverse()
-
-                # 7. Recuperiamo i dati dei keypoints per controllare il movimento effettivo sulla finestra campionata
-                kp_window_np = np.array([f[0] for f in sampled_window])
-
-                # Calcoliamo la deviazione standard temporale per ogni coordinata
-                # Questo ci dice quanto variano i punti nel tempo (negli ultimi 8 frame)
-                movimento_rilevato = np.std(kp_window_np, axis=0).mean()
-
-                # SOGLIA DI MOVIMENTO: Regola questo valore empiricamente!
-                # Se il valore è inferiore alla soglia, l'utente è fermo o si muove pochissimo.
-                SOGLIA_STASI = 0.0001 
-
-                if movimento_rilevato < SOGLIA_STASI:
-                    # Se la persona è ferma, forziamo il risultato a "In attesa di movimento"
-                    response = {
-                        "status": "predicted",
-                        "frames_stacked": 8,
-                        "exercise": "In attesa di movimento... 🛑",
-                        "confidence": 0.0
-                    }
-                    await websocket.send_text(json.dumps(response))
-                    continue
-                
-                # 6. Se il buffer è pieno (ha esattamente 8 frame), costruiamo il minibatch per la LSTM
-                # Estraiamo separatamente le liste per i 3 rami dalla coda
-                kp_window = [f[0] for f in sampled_window]
-                an_window = [f[1] for f in sampled_window]
-                ball_window = [f[2] for f in sampled_window]
-
-                # Convertiamo in array NumPy aggiungendo la dimensione del Batch (= 1)
-                # Shape finale desiderata dalla LSTM: (1, 8, numero_features)
-                x1_np = np.expand_dims(np.array(kp_window), axis=0)
-                x2_np = np.expand_dims(np.array(an_window), axis=0)
-                x3_np = np.expand_dims(np.array(ball_window), axis=0)
-                
-                # Trasformiamo in Tensor PyTorch e spostiamo sulla GPU/CPU corretta
-                x1_tensor = torch.tensor(x1_np, dtype=torch.float32).to(device)
-                x2_tensor = torch.tensor(x2_np, dtype=torch.float32).to(device)
-                x3_tensor = torch.tensor(x3_np, dtype=torch.float32).to(device)
-                
-                # --- NUOVA LOGICA DI INFERENZA MULTI-MODELLO (ENSEMBLE) ---
-                best_exercise = "Esercizio Sconosciuto"
-                highest_confidence = 0.0
-                
-                with torch.no_grad():
-                    # Interroghiamo tutti e 6 i modelli sullo stesso identico input temporale
-                    for nome_esercizio, modello in modelli_ensemble.items():
-                        logit = modello(x1_tensor, x2_tensor, x3_tensor)
-                        # Schiacciamo il logit tra 0.0 e 1.0 usando la Sigmoide (visto che l'output è pari a 1)
-                        probabilita_binaria = torch.sigmoid(logit).item()
-                        
-                        # Il modello con il punteggio più alto si aggiudica la predizione corrente
-                        if probabilita_binaria > highest_confidence:
-                            highest_confidence = probabilita_binaria
-                            best_exercise = nome_esercizio
-
-                confidence_percentage = round(highest_confidence * 100, 2)
-
-                # --- AGGIORNAMENTO DEL TRACKER CON LE CORREZIONI (Fase 4) ---
-                # Aggiorna il contatore solo se l'IA è sufficientemente stabile
-                if confidence_percentage > 70.0 and best_exercise == selected_exercise:
-                    # Otteniamo la lista di landmark tramite la funzione get_landmarks() del tuo Frame
-                    landmarks_mediapipe = frame_obj.get_landmarks()
-                    
-                    if landmarks_mediapipe:
-                        # Comunichiamo al tracker i punti e l'esercizio predetto
-                        tracker.update(best_exercise, landmarks_mediapipe)
-
-                # 8. Inviamo il responso finale in tempo reale a React recuperando 
-                # i contatori aggiornati dal tracker
+            # Risposta immediata se non c'è nessun modello per l'esercizio scelto
+            if modello_attivo is None:
+                nome_leggibile = (selected_exercise or "").replace("_", " ").title()
                 response = {
-                    "status": "predicted",
-                    "frames_stacked": 8,
-                    "exercise": best_exercise,
-                    "confidence": confidence_percentage, 
-                    "reps": tracker.get_reps(),
-                    "phrase": tracker.get_phrase()
+                    "status": "no_model",
+                    "frames_stacked": 0,
+                    "exercise": "Modello non disponibile",
+                    "confidence": 0.0,
+                    "reps": 0,
+                    "phrase": (
+                        f"L'esercizio '{nome_leggibile}' non ha un modello di riconoscimento."
+                        if selected_exercise
+                        else "Seleziona un esercizio."
+                    ),
                 }
                 await websocket.send_text(json.dumps(response))
+                continue
+
+            # Decodifica frame
+            if "," in image_base64:
+                image_base64 = image_base64.split(",")[1]
+            frame_bgr = cv2.imdecode(
+                np.frombuffer(base64.b64decode(image_base64), dtype=np.uint8),
+                cv2.IMREAD_COLOR,
+            )
+            if frame_bgr is None:
+                continue
+
+            # Estrazione feature
+            frame_obj = Frame(frame_bgr)
+            frame_obj.interpolate_keypoints(None, None)
+            frame_obj.extract_angles()
+
+            kp_data   = frame_obj.process_keypoints()
+            an_data   = frame_obj.process_angles()
+            ball_data = frame_obj.process_only_ball()
+
+            landmarks = frame_obj.get_landmarks()
+
+            # ── Controllo visibilità iniziale ─────────────────────────────────
+            if not is_fully_visible_at_start:
+                corpo_ok = bool(landmarks) and all(
+                    i < len(landmarks) and landmarks[i].visibility >= 0.5
+                    for i in INDICI_CORPO
+                )
+                if not corpo_ok:
+                    await websocket.send_text(json.dumps({
+                        "status": "buffering",
+                        "frames_stacked": 0,
+                        "max_frames": MIN_FRAMES,
+                        "exercise": "Allontanati e inquadra il corpo",
+                        "confidence": 0.0,
+                        "reps": tracker.get_reps(),
+                        "phrase": "Posizionati in modo da mostrare tutte le articolazioni.",
+                    }))
+                    continue
+
+                is_fully_visible_at_start = True
+                print("Utente posizionato correttamente. Riconoscimento sbloccato!")
+
+            if not landmarks:
+                continue
+
+            # ── Buffer cronologico ────────────────────────────────────────────
+            raw_history_buffer.append((kp_data, an_data, ball_data))
+            if len(raw_history_buffer) > max_history_length:
+                raw_history_buffer.pop(0)
+
+            if len(raw_history_buffer) < MIN_FRAMES:
+                await websocket.send_text(json.dumps({
+                    "status": "buffering",
+                    "frames_stacked": len(raw_history_buffer),
+                    "max_frames": MIN_FRAMES,
+                    "exercise": "In attesa di dati...",
+                    "confidence": 0.0,
+                    "reps": 0,
+                    "phrase": f"Inizializzazione... ({len(raw_history_buffer)}/{MIN_FRAMES})",
+                }))
+                continue
+
+            # ── Campionamento a salti equidistanti ────────────────────────────
+            sampled = raw_history_buffer[-1 : -MIN_FRAMES - 1 : -SKIP_INTERVAL]
+            sampled.reverse()
+
+            # Controllo stasi
+            movimento = np.std(np.array([f[0] for f in sampled]), axis=0).mean()
+            if movimento < SOGLIA_STASI:
+                await websocket.send_text(json.dumps({
+                    "status": "predicted",
+                    "frames_stacked": 8,
+                    "exercise": "In attesa di movimento... 🛑",
+                    "confidence": 0.0,
+                }))
+                continue
+
+            # ── Inferenza (solo il modello dell'esercizio scelto) ─────────────
+            x1 = torch.tensor(np.expand_dims(np.array([f[0] for f in sampled]), 0), dtype=torch.float32).to(device)
+            x2 = torch.tensor(np.expand_dims(np.array([f[1] for f in sampled]), 0), dtype=torch.float32).to(device)
+            x3 = torch.tensor(np.expand_dims(np.array([f[2] for f in sampled]), 0), dtype=torch.float32).to(device)
+
+            with torch.no_grad():
+                logit = modello_attivo(x1, x2, x3)
+                confidence_percentage = round(torch.sigmoid(logit).item() * 100, 2)
+
+            # ── Aggiornamento tracker ─────────────────────────────────────────
+            if confidence_percentage > 70.0:
+                tracker.update(selected_exercise, landmarks)
+
+            # ── Feedback LLM (non bloccante) ──────────────────────────────────
+            current_time = time.time()
+
+            # Raccoglie il risultato se il task precedente è completato
+            if llm_task is not None and llm_task.done():
+                try:
+                    result = llm_task.result()
+                    if result:
+                        llm_feedback_id += 1
+                        pending_llm_feedback = (result, llm_feedback_id)
+                except Exception:
+                    pass
+                llm_task = None
+
+            # Determina se avviare un nuovo task
+            if (
+                groq_client is not None
+                and llm_enabled
+                and confidence_percentage > 70.0
+                and llm_task is None
+                and tracker.get_last_angle() is not None
+                and (
+                    (tracker.get_is_correcting() and current_time - last_feedback_time >= CORRECTION_COOLDOWN)
+                    or (current_time - last_feedback_time >= LLM_INTERVAL)
+                )
+            ):
+                last_feedback_time = current_time
+                llm_task = asyncio.create_task(
+                    genera_feedback_llm(
+                        selected_exercise,
+                        tracker.get_last_angle(),
+                        tracker.get_reps(),
+                        tracker.get_is_correcting(),
+                        tracker.get_last_correction_phrase(),
+                    )
+                )
+
+            # Prepara i campi LLM per la risposta
+            if pending_llm_feedback is not None:
+                llm_text, llm_id = pending_llm_feedback
+                pending_llm_feedback = None
+            else:
+                llm_text = None
+                llm_id = llm_feedback_id
+
+            await websocket.send_text(json.dumps({
+                "status": "predicted",
+                "frames_stacked": 8,
+                "exercise": selected_exercise,
+                "confidence": confidence_percentage,
+                "reps": tracker.get_reps(),
+                "phrase": tracker.get_phrase(),
+                "llm_feedback": llm_text,
+                "llm_feedback_id": llm_id,
+            }))
 
     except WebSocketDisconnect:
-        print("Client React disconnesso.")
+        print("Client disconnesso.")
     except Exception as e:
-        print(f"Errore imprevisto nel loop WebSocket: {e}")
+        print(f"Errore nel loop WebSocket: {e}")

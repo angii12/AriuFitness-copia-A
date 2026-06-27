@@ -27,7 +27,6 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   }
 
-  .logout-button:hover { background-color: #c1121f; }
 
   /* Avatar + menu profilo */
 .profile-wrap { position: relative; }
@@ -54,54 +53,12 @@
   border-radius: 50%;
   position: absolute;
 }
-.avatar-btn.small {
-  width: clamp(30px, 4.5vw, 32px);
-  height: clamp(30px, 4.5vw, 32px);
-}
-
 .avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
 }
-
-.profile-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  min-width: clamp(200px, 80vw, 240px);
-  padding: clamp(8px, 1.5vw, 10px);
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  z-index: 50;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.profile-row { display: flex; align-items: center; gap: 10px; }
-.profile-info { display: flex; flex-direction: column; }
-.profile-name { color: #2d2d2d; font-weight: 600; line-height: 1.2; font-size: clamp(0.9rem, 2vw, 1rem); }
-.profile-email { color: #5B120F; font-size: clamp(0.8rem, 1.5vw, 0.9rem); }
-
-.menu-divider { height: 1px; background: #93100b; margin: clamp(8px, 1.5vw, 10px) 0; }
-.menu-item {
-  width: 100%;
-  text-align: left;
-  padding: clamp(6px, 1.5vw, 8px) clamp(8px, 1.5vw, 10px);
-  border-radius: 8px;
-  background: transparent;
-  border: none;
-  color: #2d2d2d;
-  cursor: pointer;
-  text-decoration: none;
-  display: block;
-  font-size: clamp(0.85rem, 1.8vw, 1rem);
-  transition: all 0.2s ease;
-}
-.menu-item:hover { background: #c1121f; color: #5B120F; }
-.menu-item.danger { color: #c1121f; }
 
 /* --- Menu profilo: allineamento e spaziature --- */
 .gh-menu {

@@ -7,7 +7,7 @@ const PredictionContext = createContext();
 export const PredictionProvider = ({ children }) => {
   const [prediction, setPrediction] = useState({
     status: 'Inattivo',
-    exercise: 'Mettiti in posizione...',
+    exercise: 'Seleziona un esercizio',
     confidence: 0,
     frames_stacked: 0,
     reps: 0,

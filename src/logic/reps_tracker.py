@@ -59,6 +59,9 @@ class ExerciseTracker:
         }
         self.feedback_timer = 0
         self.last_predicted = None
+        self.last_angle = None
+        self.is_correcting = False
+        self.last_correction_phrase = None
 
     def _calculate_angle(self, a, b, c):
         """Calcola l'angolo tra tre punti in 2D"""
@@ -78,6 +81,8 @@ class ExerciseTracker:
         state = self.exercise_states[exercise_name]
         self.feedback_timer += 1
         self.last_predicted = exercise_name
+        self.is_correcting = False
+        self.last_correction_phrase = None
 
         try:
             # --- 1. MEDICINE BALL SQUAT ---
@@ -98,6 +103,7 @@ class ExerciseTracker:
                 
                 # Selezioniamo l'angolo minore per gestire le occlusioni di profilo o le asimmetrie frontali
                 angle = min(angle_sx, angle_dx)
+                self.last_angle = angle
 
                 # --- Logica di soglia per l'angolo del ginocchio ---
                 # Nota: In posizione eretta il ginocchio è a ~180°. In uno squat profondo scende sotto i 90-100°.
@@ -106,6 +112,8 @@ class ExerciseTracker:
                         state['stage'] = 'down'
                     elif angle < 140 and self.feedback_timer % 15 == 0:
                         state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_depth']
+                        self.is_correcting = True
+                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_depth']
                         
                 elif state['stage'] == 'down':
                     if angle > 160:  # Soglia di risalita (quasi gambe tese)
@@ -119,12 +127,15 @@ class ExerciseTracker:
                 p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
                 p_ginocchio = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
                 angle = self._calculate_angle(p_spalla, p_bacino, p_ginocchio)
+                self.last_angle = angle
 
                 if state['stage'] == 'down':
                     if angle > 160:
                         state['stage'] = 'up'
                     elif angle > 130 and angle <= 155 and self.feedback_timer % 15 == 0:
                         state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_low']
+                        self.is_correcting = True
+                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_low']
                 elif state['stage'] == 'up':
                     if angle < 130:
                         state['stage'] = 'down'
@@ -139,7 +150,8 @@ class ExerciseTracker:
                 p_ginocchio_sx = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
                                 
                 angle = self._calculate_angle(p_spalla_sx, p_bacino_sx, p_ginocchio_sx)
-                
+                self.last_angle = angle
+
                 # --- Logica di conteggio per estensione busto prono ---                
                 if state['stage'] == 'down':
                     if angle < 158:  # Ti sei sollevato abbastanza (fase UP)
@@ -156,12 +168,15 @@ class ExerciseTracker:
                 p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
                 p_spalla = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
                 angle = self._calculate_angle(p_caviglia, p_bacino, p_spalla)
+                self.last_angle = angle
 
                 if state['stage'] == 'down':
                     if angle > 165:
                         state['stage'] = 'up'
                     elif angle > 145 and angle <= 165 and self.feedback_timer % 15 == 0:
                         state['phrase'] = "Ottimo, ma sali ancora un po'!"
+                        self.is_correcting = True
+                        self.last_correction_phrase = "Ottimo, ma sali ancora un po'!"
                 elif state['stage'] == 'up':
                     if angle < 140:
                         state['stage'] = 'down'
@@ -184,12 +199,15 @@ class ExerciseTracker:
 
                 # Scegliamo l'angolo del lato che si sta flettendo di più
                 angle = min(angle_left, angle_right)
+                self.last_angle = angle
 
                 if state['stage'] == 'center':
                     if angle < 155:
                         state['stage'] = 'bend'
                     elif angle >= 155 and angle < 168 and self.feedback_timer % 15 == 0:
                         state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_short']
+                        self.is_correcting = True
+                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_short']
                 elif state['stage'] == 'bend':
                     if angle > 173:
                         state['stage'] = 'center'
@@ -202,6 +220,7 @@ class ExerciseTracker:
                 p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
                 p_ginocchio = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
                 angle = self._calculate_angle(p_spalla, p_bacino, p_ginocchio)
+                self.last_angle = angle
 
                 if state['stage'] == 'start':
                     if angle < 155:
@@ -209,6 +228,8 @@ class ExerciseTracker:
                 elif state['stage'] == 'extension':
                     if angle > 165 and angle <= 172 and self.feedback_timer % 15 == 0:
                         state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_back']
+                        self.is_correcting = True
+                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_back']
                     elif angle > 172:
                         state['stage'] = 'start'
                         state['reps'] += 1
@@ -225,3 +246,12 @@ class ExerciseTracker:
         if not self.last_predicted or self.last_predicted not in self.exercise_states:
             return "In attesa dell'esercizio..."
         return self.exercise_states[self.last_predicted]['phrase']
+
+    def get_last_angle(self):
+        return self.last_angle
+
+    def get_is_correcting(self):
+        return self.is_correcting
+
+    def get_last_correction_phrase(self):
+        return self.last_correction_phrase
