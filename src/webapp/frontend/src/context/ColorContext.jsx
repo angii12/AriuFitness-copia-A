@@ -52,8 +52,14 @@ export const ColorProvider = ({ children }) => {
     fetchUserColor();
   }, []);
 
+  const updateColor = (coloreAriu) => {
+    const colore = coloriDisponibili[coloreAriu] || defaultColor;
+    setBackgroundColor(colore);
+    document.documentElement.style.setProperty('--page-bg-color', colore);
+  };
+
   return (
-    <ColorContext.Provider value={{ backgroundColor, coloriDisponibili, resetColor }}>
+    <ColorContext.Provider value={{ backgroundColor, coloriDisponibili, resetColor, updateColor }}>
       {children}
     </ColorContext.Provider>
   );

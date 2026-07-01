@@ -10,7 +10,7 @@ import ExerciseListPage from './pages/ExerciseListPage';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import Profilo from './pages/Profilo';
-import ChronologyPage from './pages/ChronologyPage';
+import EserciziSalvatiPage from './pages/ChronologyPage';
 import WelcomePage from './pages/WelcomePage';
 import OpzioniPage from './pages/OpzioniPage';
 const isAuthenticated = () => localStorage.getItem('token') !== null;
@@ -37,7 +37,7 @@ function App() {
               <Route path="/allenamento" element={<PrivateRoute><ClassificationPage /></PrivateRoute>} />
               <Route path="/visualizza-esercizi" element={<PrivateRoute><ExerciseListPage /></PrivateRoute>} />
               <Route path="/profilo" element={<PrivateRoute><Profilo /></PrivateRoute>} />
-              <Route path="/cronologia" element={<PrivateRoute><ChronologyPage /></PrivateRoute>} />
+              <Route path="/cronologia" element={<PrivateRoute><EserciziSalvatiPage /></PrivateRoute>} />
               <Route path="/opzioni" element={<PrivateRoute><OpzioniPage /></PrivateRoute>} />
             </Routes>
           </main>

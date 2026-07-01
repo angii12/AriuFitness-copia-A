@@ -1,0 +1,139 @@
+.tutorial-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+
+.tutorial-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: clamp(24px, 5vw, 36px) clamp(24px, 5vw, 40px);
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  animation: tutorial-in 0.25s ease;
+}
+
+@keyframes tutorial-in {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.tutorial-icon {
+  font-size: clamp(2rem, 6vw, 2.8rem);
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+/* Dots indicatore step */
+.tutorial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d4c4b0;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.tutorial-dot--active {
+  background: var(--colorvar, #5b120f);
+  width: 22px;
+  border-radius: 4px;
+}
+
+.tutorial-title {
+  font-size: clamp(1.05rem, 3vw, 1.25rem);
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+  letter-spacing: 0.3px;
+}
+
+.tutorial-desc {
+  font-size: clamp(0.86rem, 2.2vw, 0.97rem);
+  color: #555;
+  line-height: 1.65;
+  margin: 0 0 26px 0;
+}
+
+/* Azioni */
+.tutorial-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.tutorial-btn-primary {
+  padding: clamp(9px, 1.8vw, 11px) clamp(20px, 4vw, 28px);
+  background: var(--colorvar, #5b120f);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: clamp(0.88rem, 2vw, 0.97rem);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.tutorial-btn-primary:hover { background: var(--colorvar, #5b120f); box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+.tutorial-btn-primary:focus,
+.tutorial-btn-primary:focus-visible,
+.tutorial-btn-primary:active { outline: none; }
+
+.tutorial-btn-secondary {
+  padding: clamp(9px, 1.8vw, 11px) clamp(14px, 3vw, 18px);
+  background: transparent;
+  color: #888;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-size: clamp(0.86rem, 2vw, 0.93rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tutorial-btn-secondary:hover { background: transparent; box-shadow: none; }
+.tutorial-btn-secondary:focus,
+.tutorial-btn-secondary:focus-visible,
+.tutorial-btn-secondary:active { outline: none; }
+
+.tutorial-btn-skip {
+  padding: 9px 12px;
+  background: transparent;
+  color: #bbb;
+  border: none;
+  font-size: clamp(0.82rem, 1.8vw, 0.88rem);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tutorial-btn-skip:focus,
+.tutorial-btn-skip:focus-visible,
+.tutorial-btn-skip:active { outline: none; }
+
+
+@media (max-width: 480px) {
+  .tutorial-card {
+    border-radius: 16px;
+  }
+
+  .tutorial-actions {
+    gap: 6px;
+  }
+}

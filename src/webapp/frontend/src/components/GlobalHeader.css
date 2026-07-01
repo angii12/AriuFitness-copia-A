@@ -1,149 +1,92 @@
-/* src/webapp/frontend/src/components/GlobalHeader.css */
+/* ── Hamburger button ── */
+.nav-wrap {
+  position: relative;
+}
 
-/* Stile per il contenitore dei bottoni nell'header */
-.header-buttons {
-    display: flex;
-    align-items: center;
-    gap: clamp(10px, 2vw, 15px);
-    flex-wrap: wrap;
-  }
-  
-  /* Stile per il bottone "Torna alla Home" */
-  .back-button {
-    padding: clamp(8px, 2vw, 10px) clamp(15px, 3vw, 20px);
-    color: #ffffff;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: clamp(0.85rem, 2vw, 1rem);
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    cursor: pointer;
-  }
-  
-  .back-button:hover {
-    color: #ffffff;
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  }
-
-
-  /* Avatar + menu profilo */
-.profile-wrap { position: relative; }
-
-.avatar-btn {
-  width: clamp(32px, 5vw, 36px);
-  height: clamp(32px, 5vw, 40px);
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.4);
-  background: #ffffff;
-  display: grid;
-  place-items: center;
+.hamburger-btn {
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  line-height: 1;
   color: #5B120F;
-  font-weight: 700;
   cursor: pointer;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-.avatar-btn:hover { background: #93100b; }
-.avatar-btn img,
-.avatar-btn svg {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  position: absolute;
-}
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
 }
 
-/* --- Menu profilo: allineamento e spaziature --- */
-.gh-menu {
+.hamburger-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ── Dropdown menu ── */
+.hamburger-menu {
   position: absolute;
+  top: calc(100% + 12px);
   right: 0;
-  top: calc(100% + 8px);
-  min-width: 260px;
-  padding: 12px;
+  min-width: 220px;
   background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
-  z-index: 50;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  z-index: 200;
+  padding: 8px 0;
+  animation: hm-in 0.18s ease;
 }
 
-@media (max-width: 480px) {
-  .gh-menu {
-    position: absolute;
-    left: 180%;
-    transform: translateX(-50%); /* Lo centra matematicamente rispetto all'icona */
-    top: calc(100% + 8px);
-    min-width: 260px;
-   }
+@keyframes hm-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.gh-user-row {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 10px;
-  align-items: center;         /* centra verticalmente avatar e testi */
-}
-
-.gh-user-info {
+/* ── Singola voce ── */
+.hm-item {
   display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.gh-name {
-  color: #2d2d2d;
-  font-weight: 700;
-  margin: 0;
-}
-
-.gh-email {
+  align-items: center;
+  gap: 14px;
+  padding: 13px 20px;
   color: #5B120F;
-  font-size: 0.9rem;
-  margin-top: 2px;
-}
-
-.gh-divider {
-  height: 1px;
-  background: #c1121f;
-  margin: 12px 0;
-}
-
-/* --- Bottoni azione nel menu --- */
-.menu-btn {
-  text-align: left;
-  padding: 10px 20px;
-  border-radius: 12px;
-  background: #5B120F;
-  color: #ffffff;
-  font-weight: 600;
-  cursor: pointer;
   text-decoration: none;
-  transition: background .15s ease, border-color .15s ease;
-  margin: 15px;
+  font-size: 0.97rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.menu-btn:hover {
-  background: #93100b;
-  border-color: #5B120F;
+.hm-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
-/* --- Logout evidenziato in rosso --- */
-.menu-btn.danger {
-  background: #fce4e6;
-  border-color: #c1121f;
-  color: #c1121f;
+.hm-icon {
+  font-size: 1.15rem;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.menu-btn.danger:hover {
-  background: #f5bfc6;
-  border-color: #c1121f;
+/* ── Logout ── */
+.hm-logout {
+  color: #ff4444;
 }
 
-/* opzionale: taglia qualsiasi minima eccedenza interna */
-.gh-menu { overflow: hidden; }
+.hm-logout:hover {
+  background: rgba(255, 68, 68, 0.12);
+  color: #ff4444;
+}
+
+/* ── Mobile: menu a larghezza piena ── */
+@media (max-width: 480px) {
+  .hamburger-menu {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    min-width: unset;
+    border-radius: 16px;
+  }
+}

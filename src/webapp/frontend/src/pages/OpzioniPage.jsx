@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useColor } from '../context/ColorContext';
+import { supabase } from '../SupabaseClient';
 import './OpzioniPage.css';
 
 const MODALITA = [
@@ -34,9 +35,37 @@ function OpzioniPage() {
     () => localStorage.getItem('ttsEnabled') !== 'false'
   );
 
-  const handleSalva = () => {
+  useEffect(() => {
+    const syncFromDb = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profilo } = await supabase
+        .from('profili')
+        .select('opzione_tutorial, opzione_tts')
+        .eq('id', user.id)
+        .single();
+      if (profilo) {
+        const mode = profilo.opzione_tutorial || 'sovrapposizione';
+        const tts = profilo.opzione_tts !== false;
+        setModalitaSelezionata(mode);
+        setTtsAbilitato(tts);
+        localStorage.setItem('tutorialMode', mode);
+        localStorage.setItem('ttsEnabled', tts ? 'true' : 'false');
+      }
+    };
+    syncFromDb();
+  }, []);
+
+  const handleSalva = async () => {
     localStorage.setItem('tutorialMode', modalitaSelezionata);
     localStorage.setItem('ttsEnabled', ttsAbilitato ? 'true' : 'false');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('profili')
+        .update({ opzione_tutorial: modalitaSelezionata, opzione_tts: ttsAbilitato })
+        .eq('id', user.id);
+    }
     navigate('/');
   };
 

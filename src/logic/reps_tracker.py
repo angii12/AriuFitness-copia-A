@@ -13,6 +13,7 @@ FEEDBACK_MESSAGES = {
         'start': 'Sdraiati e posiziona i piedi sulla Fitball.',
         'motivational': ['Ottima spinta!', 'Contrai i glutei!', 'Bellissima esecuzione!'],
         'correction_low': 'Sali di più con il bacino!',
+        'correction_ball': 'Tieni i piedi ben appoggiati sulla palla!',
         'good_rep': 'Ponte perfetto!'
     },
     'braccia_con_miniball': {
@@ -25,6 +26,8 @@ FEEDBACK_MESSAGES = {
         'start': 'In piedi, stringi la palla al petto ed esegui uno squat.',
         'motivational': ['Mantieni il busto dritto!', 'Spingi sui talloni!'],
         'correction_depth': 'Scendi di più con il bacino!',
+        'correction_trunk': 'Tieni il busto più eretto!',
+        'correction_sym': 'Distribuisci il peso su entrambe le gambe!',
         'good_rep': 'Squat perfetto!'
     },
     'roll_out_sulla_fitball': {
@@ -37,25 +40,48 @@ FEEDBACK_MESSAGES = {
         'start': 'Pancia sulla Fitball, mani dietro la testa.',
         'motivational': ['Estendi bene i lombari!', 'Sali in modo controllato!'],
         'correction_flex': 'Fletti di più il busto verso il basso prima di salire!',
+        'correction_knees': 'Tieni le gambe più tese!',
         'good_rep': 'Estensione completata!'
     },
     'overhead_ball_side_bends': {
         'start': 'Porta la Fitball sopra la testa a braccia tese.',
         'motivational': ['Resta sul piano frontale!', 'Ottimo allungamento!'],
         'correction_short': 'Inclinati un po\' di più lateralmente!',
+        'correction_knees': 'Tieni le gambe dritte!',
         'good_rep': 'Flessione perfetta!'
     }
 }
 
+
 class ExerciseTracker:
     def __init__(self):
         self.exercise_states = {
-            'sollevamento_gambe_stringendo_la_fitball': {'reps': 0, 'stage': 'down', 'phrase': FEEDBACK_MESSAGES['sollevamento_gambe_stringendo_la_fitball']['start']},
-            'braccia_con_miniball': {'reps': 0, 'stage': 'down', 'phrase': FEEDBACK_MESSAGES['braccia_con_miniball']['start']},
-            'medicine_ball_squat': {'reps': 0, 'stage': 'up', 'phrase': FEEDBACK_MESSAGES['medicine_ball_squat']['start']},
-            'roll_out_sulla_fitball': {'reps': 0, 'stage': 'start', 'phrase': FEEDBACK_MESSAGES['roll_out_sulla_fitball']['start']},
-            'fitball_back_extensions': {'reps': 0, 'stage': 'down', 'phrase': FEEDBACK_MESSAGES['fitball_back_extensions']['start']},
-            'overhead_ball_side_bends': {'reps': 0, 'stage': 'center', 'phrase': FEEDBACK_MESSAGES['overhead_ball_side_bends']['start']}
+            'sollevamento_gambe_stringendo_la_fitball': {
+                'reps': 0, 'stage': 'down',
+                'phrase': FEEDBACK_MESSAGES['sollevamento_gambe_stringendo_la_fitball']['start']
+            },
+            'braccia_con_miniball': {
+                'reps': 0, 'stage': 'down',
+                'phrase': FEEDBACK_MESSAGES['braccia_con_miniball']['start'],
+                'min_up_angle': 180.0   # traccia il picco di sollevamento durante la fase UP
+            },
+            'medicine_ball_squat': {
+                'reps': 0, 'stage': 'up',
+                'phrase': FEEDBACK_MESSAGES['medicine_ball_squat']['start']
+            },
+            'roll_out_sulla_fitball': {
+                'reps': 0, 'stage': 'start',
+                'phrase': FEEDBACK_MESSAGES['roll_out_sulla_fitball']['start'],
+                'arch_detected': False  # True se viene rilevato inarco durante l'estensione
+            },
+            'fitball_back_extensions': {
+                'reps': 0, 'stage': 'down',
+                'phrase': FEEDBACK_MESSAGES['fitball_back_extensions']['start']
+            },
+            'overhead_ball_side_bends': {
+                'reps': 0, 'stage': 'center',
+                'phrase': FEEDBACK_MESSAGES['overhead_ball_side_bends']['start']
+            }
         }
         self.feedback_timer = 0
         self.last_predicted = None
@@ -63,8 +89,17 @@ class ExerciseTracker:
         self.is_correcting = False
         self.last_correction_phrase = None
 
+    def _pt(self, lm, key):
+        """Restituisce [x, y] del landmark specificato."""
+        idx = LANDMARK_DICT[key]
+        return [lm[idx].x, lm[idx].y]
+
+    def _vis(self, lm, *keys, threshold=0.45):
+        """True se tutti i landmark indicati hanno visibility >= threshold."""
+        return all(lm[LANDMARK_DICT[k]].visibility >= threshold for k in keys)
+
     def _calculate_angle(self, a, b, c):
-        """Calcola l'angolo tra tre punti in 2D"""
+        """Calcola l'angolo in gradi nel punto b tra i vettori b→a e b→c."""
         a = np.array(a)
         b = np.array(b)
         c = np.array(c)
@@ -73,6 +108,12 @@ class ExerciseTracker:
         if angle > 180.0:
             angle = 360-angle
         return angle
+
+    def _set_correction(self, state, phrase):
+        """Imposta una correzione senza incrementare le reps."""
+        state['phrase'] = phrase
+        self.is_correcting = True
+        self.last_correction_phrase = phrase
 
     def update(self, exercise_name, landmarks):
         if exercise_name not in self.exercise_states or not landmarks:
@@ -87,45 +128,61 @@ class ExerciseTracker:
         try:
             # --- 1. MEDICINE BALL SQUAT ---
             if exercise_name == 'medicine_ball_squat':
-            # Punti lato SINISTRO (Bacino, Ginocchio, Caviglia)
-                p_bacino_sx = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_ginocchio_sx = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
-                p_caviglia_sx = [landmarks[LANDMARK_DICT["LEFT_ANKLE"]].x, landmarks[LANDMARK_DICT["LEFT_ANKLE"]].y]
-                
-                # Punti lato DESTRO (Bacino, Ginocchio, Caviglia)
-                p_bacino_dx = [landmarks[LANDMARK_DICT["RIGHT_HIP"]].x, landmarks[LANDMARK_DICT["RIGHT_HIP"]].y]
-                p_ginocchio_dx = [landmarks[LANDMARK_DICT["RIGHT_KNEE"]].x, landmarks[LANDMARK_DICT["RIGHT_KNEE"]].y]
-                p_caviglia_dx = [landmarks[LANDMARK_DICT["RIGHT_ANKLE"]].x, landmarks[LANDMARK_DICT["RIGHT_ANKLE"]].y]
-                
-                # Calcolo dell'angolo del ginocchio per entrambi i lati
+                p_bacino_sx   = self._pt(landmarks, "LEFT_HIP")
+                p_ginocchio_sx = self._pt(landmarks, "LEFT_KNEE")
+                p_caviglia_sx = self._pt(landmarks, "LEFT_ANKLE")
+
+                p_bacino_dx   = self._pt(landmarks, "RIGHT_HIP")
+                p_ginocchio_dx = self._pt(landmarks, "RIGHT_KNEE")
+                p_caviglia_dx = self._pt(landmarks, "RIGHT_ANKLE")
+
                 angle_sx = self._calculate_angle(p_bacino_sx, p_ginocchio_sx, p_caviglia_sx)
                 angle_dx = self._calculate_angle(p_bacino_dx, p_ginocchio_dx, p_caviglia_dx)
-                
-                # Selezioniamo l'angolo minore per gestire le occlusioni di profilo o le asimmetrie frontali
                 angle = min(angle_sx, angle_dx)
                 self.last_angle = angle
 
-                # --- Logica di soglia per l'angolo del ginocchio ---
-                # Nota: In posizione eretta il ginocchio è a ~180°. In uno squat profondo scende sotto i 90-100°.
                 if state['stage'] == 'up':
-                    if angle < 100:  # Soglia di discesa (puoi regolarla tra 90 e 110 in base alla profondità voluta)
+                    if angle < 100:
                         state['stage'] = 'down'
                     elif angle < 140 and self.feedback_timer % 15 == 0:
-                        state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_depth']
-                        self.is_correcting = True
-                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_depth']
-                        
+                        self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_depth'])
+
                 elif state['stage'] == 'down':
-                    if angle > 160:  # Soglia di risalita (quasi gambe tese)
-                        state['stage'] = 'up'
-                        state['reps'] += 1
-                        state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                    if angle > 160:
+                        state['stage'] = 'up'  # avanza sempre per non bloccare la macchina a stati
+
+                        # Check secondario 1: tronco non troppo inclinato in avanti
+                        trunk_ok = True
+                        if self._vis(landmarks, "LEFT_SHOULDER", "LEFT_HIP", "LEFT_KNEE",
+                                               "RIGHT_SHOULDER", "RIGHT_HIP", "RIGHT_KNEE"):
+                            trunk_l = self._calculate_angle(
+                                self._pt(landmarks, "LEFT_SHOULDER"),
+                                self._pt(landmarks, "LEFT_HIP"),
+                                self._pt(landmarks, "LEFT_KNEE")
+                            )
+                            trunk_r = self._calculate_angle(
+                                self._pt(landmarks, "RIGHT_SHOULDER"),
+                                self._pt(landmarks, "RIGHT_HIP"),
+                                self._pt(landmarks, "RIGHT_KNEE")
+                            )
+                            trunk_ok = min(trunk_l, trunk_r) > 60
+
+                        # Check secondario 2: simmetria tra i due lati
+                        sym_ok = abs(angle_sx - angle_dx) < 20
+
+                        if trunk_ok and sym_ok:
+                            state['reps'] += 1
+                            state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                        elif not trunk_ok:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_trunk'])
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_sym'])
 
             # --- 2. SOLLEVAMENTO GAMBE STRINGENDO LA FITBALL ---
             elif exercise_name == 'sollevamento_gambe_stringendo_la_fitball':
-                p_spalla = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
-                p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_ginocchio = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
+                p_spalla   = self._pt(landmarks, "LEFT_SHOULDER")
+                p_bacino   = self._pt(landmarks, "LEFT_HIP")
+                p_ginocchio = self._pt(landmarks, "LEFT_KNEE")
                 angle = self._calculate_angle(p_spalla, p_bacino, p_ginocchio)
                 self.last_angle = angle
 
@@ -133,40 +190,61 @@ class ExerciseTracker:
                     if angle > 160:
                         state['stage'] = 'up'
                     elif angle > 130 and angle <= 155 and self.feedback_timer % 15 == 0:
-                        state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_low']
-                        self.is_correcting = True
-                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_low']
+                        self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_low'])
+
                 elif state['stage'] == 'up':
                     if angle < 130:
                         state['stage'] = 'down'
-                        state['reps'] += 1
-                        state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+
+                        # Check secondario: angolo al ginocchio < 120° → piedi correttamente sulla palla
+                        ball_ok = True
+                        if self._vis(landmarks, "LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"):
+                            knee_angle = self._calculate_angle(
+                                self._pt(landmarks, "LEFT_HIP"),
+                                self._pt(landmarks, "LEFT_KNEE"),
+                                self._pt(landmarks, "LEFT_ANKLE")
+                            )
+                            ball_ok = knee_angle < 120
+
+                        if ball_ok:
+                            state['reps'] += 1
+                            state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_ball'])
 
             # --- 3. BRACCIA CON MINIBALL ---
             elif exercise_name == 'braccia_con_miniball':
-                # Punti lato SINISTRO (Spalla, Bacino, Ginocchio)
-                p_spalla_sx = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
-                p_bacino_sx = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_ginocchio_sx = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
-                                
+                p_spalla_sx = self._pt(landmarks, "LEFT_SHOULDER")
+                p_bacino_sx = self._pt(landmarks, "LEFT_HIP")
+                p_ginocchio_sx = self._pt(landmarks, "LEFT_KNEE")
                 angle = self._calculate_angle(p_spalla_sx, p_bacino_sx, p_ginocchio_sx)
                 self.last_angle = angle
 
-                # --- Logica di conteggio per estensione busto prono ---                
                 if state['stage'] == 'down':
-                    if angle < 158:  # Ti sei sollevato abbastanza (fase UP)
+                    if angle < 158:
                         state['stage'] = 'up'
-                        
+                        state['min_up_angle'] = angle  # inizia tracciamento picco
+
                 elif state['stage'] == 'up':
-                    if angle > 168:  # Sei tornato completamente a terra (fase DOWN)
+                    # Aggiorna il minimo angolo raggiunto (= massimo sollevamento)
+                    state['min_up_angle'] = min(state['min_up_angle'], angle)
+
+                    if angle > 168:
+                        lifted_ok = state['min_up_angle'] < 152  # ha raggiunto un sollevamento reale
                         state['stage'] = 'down'
-                        state['reps'] += 1
-                        state['phrase'] = f"{random.choice(FEEDBACK_MESSAGES[exercise_name]['motivational'])} R: {state['reps']}"
+                        state['min_up_angle'] = 180.0  # reset per il prossimo rep
+
+                        if lifted_ok:
+                            state['reps'] += 1
+                            state['phrase'] = f"{random.choice(FEEDBACK_MESSAGES[exercise_name]['motivational'])} R: {state['reps']}"
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_low'])
+
             # --- 4. FITBALL BACK EXTENSIONS ---
             elif exercise_name == 'fitball_back_extensions':
-                p_caviglia = [landmarks[LANDMARK_DICT["LEFT_ANKLE"]].x, landmarks[LANDMARK_DICT["LEFT_ANKLE"]].y]
-                p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_spalla = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
+                p_caviglia = self._pt(landmarks, "LEFT_ANKLE")
+                p_bacino   = self._pt(landmarks, "LEFT_HIP")
+                p_spalla   = self._pt(landmarks, "LEFT_SHOULDER")
                 angle = self._calculate_angle(p_caviglia, p_bacino, p_spalla)
                 self.last_angle = angle
 
@@ -174,30 +252,40 @@ class ExerciseTracker:
                     if angle > 165:
                         state['stage'] = 'up'
                     elif angle > 145 and angle <= 165 and self.feedback_timer % 15 == 0:
-                        state['phrase'] = "Ottimo, ma sali ancora un po'!"
-                        self.is_correcting = True
-                        self.last_correction_phrase = "Ottimo, ma sali ancora un po'!"
+                        self._set_correction(state, "Ottimo, ma sali ancora un po'!")
+
                 elif state['stage'] == 'up':
                     if angle < 140:
                         state['stage'] = 'down'
-                        state['reps'] += 1
-                        state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+
+                        # Check secondario: ginocchia sufficientemente tese (no trucco con le gambe)
+                        knees_ok = True
+                        if self._vis(landmarks, "LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE"):
+                            knee_angle = self._calculate_angle(
+                                self._pt(landmarks, "LEFT_HIP"),
+                                self._pt(landmarks, "LEFT_KNEE"),
+                                self._pt(landmarks, "LEFT_ANKLE")
+                            )
+                            knees_ok = knee_angle > 140
+
+                        if knees_ok:
+                            state['reps'] += 1
+                            state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_knees'])
 
             # --- 5. OVERHEAD BALL SIDE BENDS ---
             elif exercise_name == 'overhead_ball_side_bends':
-                # Calcolo angolo sinistro
-                p_caviglia_l = [landmarks[LANDMARK_DICT["LEFT_ANKLE"]].x, landmarks[LANDMARK_DICT["LEFT_ANKLE"]].y]
-                p_bacino_l = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_spalla_l = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
+                p_caviglia_l = self._pt(landmarks, "LEFT_ANKLE")
+                p_bacino_l   = self._pt(landmarks, "LEFT_HIP")
+                p_spalla_l   = self._pt(landmarks, "LEFT_SHOULDER")
                 angle_left = self._calculate_angle(p_caviglia_l, p_bacino_l, p_spalla_l)
 
-                # Calcolo angolo destro
-                p_caviglia_r = [landmarks[LANDMARK_DICT["RIGHT_ANKLE"]].x, landmarks[LANDMARK_DICT["RIGHT_ANKLE"]].y]
-                p_bacino_r = [landmarks[LANDMARK_DICT["RIGHT_HIP"]].x, landmarks[LANDMARK_DICT["RIGHT_HIP"]].y]
-                p_spalla_r = [landmarks[LANDMARK_DICT["RIGHT_SHOULDER"]].x, landmarks[LANDMARK_DICT["RIGHT_SHOULDER"]].y]
+                p_caviglia_r = self._pt(landmarks, "RIGHT_ANKLE")
+                p_bacino_r   = self._pt(landmarks, "RIGHT_HIP")
+                p_spalla_r   = self._pt(landmarks, "RIGHT_SHOULDER")
                 angle_right = self._calculate_angle(p_caviglia_r, p_bacino_r, p_spalla_r)
 
-                # Scegliamo l'angolo del lato che si sta flettendo di più
                 angle = min(angle_left, angle_right)
                 self.last_angle = angle
 
@@ -205,35 +293,62 @@ class ExerciseTracker:
                     if angle < 155:
                         state['stage'] = 'bend'
                     elif angle >= 155 and angle < 168 and self.feedback_timer % 15 == 0:
-                        state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_short']
-                        self.is_correcting = True
-                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_short']
+                        self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_short'])
+
                 elif state['stage'] == 'bend':
                     if angle > 173:
                         state['stage'] = 'center'
-                        state['reps'] += 1
-                        state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+
+                        # Check secondario: gambe dritte durante la flessione laterale
+                        knees_ok = True
+                        if self._vis(landmarks, "LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE",
+                                               "RIGHT_HIP", "RIGHT_KNEE", "RIGHT_ANKLE"):
+                            knee_l = self._calculate_angle(
+                                self._pt(landmarks, "LEFT_HIP"),
+                                self._pt(landmarks, "LEFT_KNEE"),
+                                self._pt(landmarks, "LEFT_ANKLE")
+                            )
+                            knee_r = self._calculate_angle(
+                                self._pt(landmarks, "RIGHT_HIP"),
+                                self._pt(landmarks, "RIGHT_KNEE"),
+                                self._pt(landmarks, "RIGHT_ANKLE")
+                            )
+                            knees_ok = knee_l > 155 and knee_r > 155
+
+                        if knees_ok:
+                            state['reps'] += 1
+                            state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_knees'])
 
             # --- 6. SWISS BALL ROLL OUT ---
             elif exercise_name == 'roll_out_sulla_fitball':
-                p_spalla = [landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].x, landmarks[LANDMARK_DICT["LEFT_SHOULDER"]].y]
-                p_bacino = [landmarks[LANDMARK_DICT["LEFT_HIP"]].x, landmarks[LANDMARK_DICT["LEFT_HIP"]].y]
-                p_ginocchio = [landmarks[LANDMARK_DICT["LEFT_KNEE"]].x, landmarks[LANDMARK_DICT["LEFT_KNEE"]].y]
+                p_spalla   = self._pt(landmarks, "LEFT_SHOULDER")
+                p_bacino   = self._pt(landmarks, "LEFT_HIP")
+                p_ginocchio = self._pt(landmarks, "LEFT_KNEE")
                 angle = self._calculate_angle(p_spalla, p_bacino, p_ginocchio)
                 self.last_angle = angle
 
                 if state['stage'] == 'start':
                     if angle < 155:
                         state['stage'] = 'extension'
+                        state['arch_detected'] = False  # reset ad ogni nuova estensione
+
                 elif state['stage'] == 'extension':
                     if angle > 165 and angle <= 172 and self.feedback_timer % 15 == 0:
-                        state['phrase'] = FEEDBACK_MESSAGES[exercise_name]['correction_back']
-                        self.is_correcting = True
-                        self.last_correction_phrase = FEEDBACK_MESSAGES[exercise_name]['correction_back']
+                        self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_back'])
+                        state['arch_detected'] = True  # inarco rilevato: blocca il conteggio
+
                     elif angle > 172:
                         state['stage'] = 'start'
-                        state['reps'] += 1
-                        state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+
+                        if not state['arch_detected']:
+                            state['reps'] += 1
+                            state['phrase'] = f"{FEEDBACK_MESSAGES[exercise_name]['good_rep']} ({state['reps']})"
+                        else:
+                            self._set_correction(state, FEEDBACK_MESSAGES[exercise_name]['correction_back'])
+                        state['arch_detected'] = False  # reset per la prossima ripetizione
+
         except Exception:
             pass
 

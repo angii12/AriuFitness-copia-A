@@ -7,6 +7,25 @@ import { usePrediction } from '../context/PredictionContext';
 import '../Dashboard.css';
 import './ClassificationPage.css';
 import FitnessClassifier from '../components/FitnessClassifier';
+import TutorialOverlay from '../components/TutorialOverlay';
+
+const TUTORIAL_CLASSIFICAZIONE = [
+  {
+    icon: '👆',
+    title: 'Seleziona l\'esercizio',
+    desc: 'Clicca su un esercizio nella lista per selezionarlo. La telecamera si attiverà e il sistema attenderà che tu sia in posizione.',
+  },
+  {
+    icon: '📷',
+    title: 'Mettiti davanti alla telecamera',
+    desc: 'Posizionati in modo che il tuo corpo sia visibile. Quando il sistema ti riconosce, parte il countdown e poi il conteggio automatico delle ripetizioni.',
+  },
+  {
+    icon: '✅',
+    title: 'Avanza tra gli esercizi',
+    desc: 'Completate le ripetizioni, clicca Prossimo Esercizio per continuare, oppure Termina Allenamento per chiudere la sessione.',
+  },
+];
 
 const DEFAULT_TARGET_REPS = 5;
 
@@ -58,6 +77,7 @@ function ClassificationPage() {
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
   const dingAudioRef = useRef(new Audio('/ding.mp3'));
+  const exerciseRefs = useRef([]);
 
   // Coda TTS per feedback LLM
   const llmQueueRef = useRef([]);
@@ -72,11 +92,32 @@ function ClassificationPage() {
   }, [isCountingActive]);
 
   useEffect(() => {
+    const scrollTarget = Math.max(0, currentExerciseIndex - 1);
+    if (currentExerciseIndex > 0 && exerciseRefs.current[scrollTarget]) {
+      exerciseRefs.current[scrollTarget].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [currentExerciseIndex]);
+
+  useEffect(() => {
+    if (isExerciseFinished) {
+      document.getElementById('workout-list-panel')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [isExerciseFinished]);
+
+  useEffect(() => {
     isExerciseFinishedRef.current = isExerciseFinished;
     if (isExerciseFinished) {
       llmQueueRef.current = [];
     }
   }, [isExerciseFinished]);
+
+  // Ferma TTS e svuota la coda LLM quando si lascia la pagina in qualsiasi modo
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+      llmQueueRef.current = [];
+    };
+  }, []);
 
   // trySpeak: riproduce il prossimo testo dalla coda LLM se la sintesi è libera.
   // Definita come ref per evitare problemi di closure nelle callback utterance.onend.
@@ -227,17 +268,17 @@ function ClassificationPage() {
 
   const handleFeedbackSubmit = (feedback) => {
     if (selectedExercise && currentExerciseStarted) {
-      const exerciseData = {
-        exercise_id: selectedExercise.id,
-        exercise_name: selectedExercise.nome,
-        completed: reps >= currentTargetReps,
-        reps: reps,
-        feedback: feedback,
-        timestamp: exerciseStartTime
-          ? new Date(exerciseStartTime).toISOString()
-          : new Date().toISOString(),
-      };
-      setCompletedExercises((prev) => [...prev, exerciseData]);
+      setCompletedExercises(prev => {
+        if (prev.some(e => e.exercise_id === selectedExercise.id)) return prev;
+        return [...prev, {
+          exercise_id: selectedExercise.id,
+          exercise_name: selectedExercise.nome,
+          completed: reps >= currentTargetReps,
+          reps,
+          feedback,
+          timestamp: exerciseStartTime ? new Date(exerciseStartTime).toISOString() : new Date().toISOString(),
+        }];
+      });
     }
 
     setIsFeedbackModalVisible(false);
@@ -378,6 +419,19 @@ function ClassificationPage() {
     if (!selectedExercise) return;
     if (reps < currentTargetReps) return;
 
+    // Registra il completamento subito, prima che l'auto-advance resetti i reps
+    setCompletedExercises(prev => {
+      if (prev.some(e => e.exercise_id === selectedExercise.id)) return prev;
+      return [...prev, {
+        exercise_id: selectedExercise.id,
+        exercise_name: selectedExercise.nome,
+        completed: true,
+        reps,
+        feedback: null,
+        timestamp: exerciseStartTime ? new Date(exerciseStartTime).toISOString() : new Date().toISOString(),
+      }];
+    });
+
     setIsCompletedVisible(true);
     setIsCountingActive(false);
     setCountdown(null);
@@ -426,6 +480,20 @@ function ClassificationPage() {
       }
       resetExerciseRuntimeState();
     }
+  };
+
+  const handleSkipExercise = () => {
+    if (selectedExercise && currentExerciseStarted) {
+      setCompletedExercises(prev => [...prev, {
+        exercise_id: selectedExercise.id,
+        exercise_name: selectedExercise.nome,
+        completed: false,
+        reps,
+        feedback: 'saltato',
+        timestamp: exerciseStartTime ? new Date(exerciseStartTime).toISOString() : new Date().toISOString(),
+      }]);
+    }
+    advanceAfterExerciseFeedback();
   };
 
   const handleStartExercise = () => {
@@ -511,12 +579,22 @@ function ClassificationPage() {
     return '#dc3545';
   };
 
+  const getExerciseIcon = (item, index) => {
+    if (index < currentExerciseIndex) {
+      const data = completedExercises.find(e => e.exercise_id === item.id);
+      return data && !data.completed ? '❌' : '✅';
+    }
+    if (index > currentExerciseIndex) return '🔒';
+    return '🔓';
+  };
+
   // --- JSX RENDER ---
   return (
     <div
       className="dashboard-container"
       style={{ '--colorvar': backgroundColor }}
     >
+      <TutorialOverlay steps={TUTORIAL_CLASSIFICAZIONE} storageKey="tutorial_visto_classificazione" />
       <div
         className={`main-view-grid${
           tutorialMode === 'diviso' ? ' main-view-grid--diviso' : ''
@@ -526,7 +604,11 @@ function ClassificationPage() {
         <div
           id="webcam-panel"
           className={`video-panel glass-card${webcamPanelHidden ? ' panel-hidden' : ''}`}
-          style={{ flexDirection: 'column' }}
+          style={{
+            flexDirection: 'column',
+            border: `5px solid ${getConfidenceBorderColor(displayConfidence)}`,
+            transition: 'border-color 0.4s ease',
+          }}
         >
           <div className="video-container">
             <FitnessClassifier
@@ -549,9 +631,8 @@ function ClassificationPage() {
             tutorialMode === 'diviso' ? ' tutorial-panel--diviso' : ''
           }`}
           style={tutorialMode === 'solo-tutorial' ? {
-            border: `3px solid ${getConfidenceBorderColor(displayConfidence)}`,
+            border: `5px solid ${getConfidenceBorderColor(displayConfidence)}`,
             transition: 'border-color 0.4s ease',
-            boxSizing: 'border-box',
           } : undefined}
         >
           <div className="video-container">
@@ -603,7 +684,7 @@ function ClassificationPage() {
         <h3>ESERCIZI SELEZIONATI</h3>
         {prediction.status === 'no_model' && selectedExercise && (
           <div className="no-model-warning">
-            &#9888; Nessun modello di riconoscimento disponibile per questo esercizio al momento.
+            &#9888; Nessun modello di riconoscimento disponibile per questo esercizio al momento. Seleziona il prossimo esercizio.
           </div>
         )}
         {selectedExercises.length === 0 ? (
@@ -617,6 +698,7 @@ function ClassificationPage() {
           {selectedExercises.map((item, index) => (
             <button
               key={index}
+              ref={el => exerciseRefs.current[index] = el}
               className={
                 selectedExercise?.id === item.id
                   ? 'exercise-item active-exercise'
@@ -629,7 +711,9 @@ function ClassificationPage() {
                 isCountingActive
               }
             >
-              {item.nome}
+              <span className="ex-num">{index + 1}</span>
+              <span className="ex-name">{item.nome}</span>
+              <span className="ex-status">{getExerciseIcon(item, index)}</span>
             </button>
           ))}
         </ul>
@@ -645,7 +729,7 @@ function ClassificationPage() {
             {currentExerciseIndex < selectedExercises.length - 1 && (
               <button
                 className="finish-exercise-button"
-                onClick={() => setIsFeedbackModalVisible(true)}
+                onClick={() => isExerciseFinished ? setIsFeedbackModalVisible(true) : handleSkipExercise()}
               >
                 {isExerciseFinished ? 'Prossimo Esercizio' : 'Salta Esercizio'}
               </button>

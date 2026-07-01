@@ -8,6 +8,7 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
   const wsRef = useRef(null);
   const intervalRef = useRef(null);
   const tutorialOverlayRef = useRef(null);
+  const streamRef = useRef(null); // stream attivo, usato per stoppare i track senza dipendere dal DOM
 
   const { prediction, setPrediction } = usePrediction();
 
@@ -19,7 +20,13 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
       setServerStatus({ text: 'Seleziona un esercizio per iniziare', color: '#ffc107' });
       return;
     }
-    wsRef.current = new WebSocket('ws://localhost:8000/ws/stream');
+
+    // La webcam parte subito, indipendentemente dal WebSocket
+    startWebcam();
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = `${window.location.hostname}:8000`;
+    wsRef.current = new WebSocket(`${wsProtocol}//${wsHost}/ws/stream`);
 
     wsRef.current.onopen = () => {
       setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
@@ -27,7 +34,6 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
         ?.toLowerCase()
         .replace(/ /g, '_');
       wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey, llm_enabled: ttsEnabled }));
-      startWebcam();
     };
 
     wsRef.current.onmessage = (event) => {
@@ -37,12 +43,10 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
 
     wsRef.current.onclose = () => {
       setServerStatus({ text: 'Disconnesso ❌', color: '#dc3545' });
-      stopStreaming();
     };
 
     wsRef.current.onerror = () => {
       setServerStatus({ text: 'Errore Connessione Back-end ⚠️', color: '#ffc107' });
-      stopStreaming();
     };
 
     return () => {
@@ -50,6 +54,18 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
       if (wsRef.current) wsRef.current.close();
     };
   }, [selectedExercise]);
+
+  // Garantisce lo spegnimento della webcam e la chiusura del WS qualunque sia
+  // la causa dell'unmount, incluso il caso in cui getUserMedia si risolve dopo l'unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+      }
+      stopStreaming(); // stopStreaming usa streamRef, non dipende dal DOM
+    };
+  }, []);
 
   useEffect(() => {
     if (!tutorialOverlayRef.current) return;
@@ -77,17 +93,49 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
     }  
   }, [isExerciseFinished]);
 
+  const stopStreaming = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    // Usa streamRef: funziona anche se videoRef è già null (componente smontato)
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
   const startWebcam = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setServerStatus({ text: 'Webcam non disponibile: apri l\'app in HTTPS', color: '#dc3545' });
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, frameRate: { ideal: 15 } }
+        video: { facingMode: 'user', frameRate: { ideal: 15 } }
       });
+      // Salva subito lo stream nel ref: se la promise si risolve dopo l'unmount
+      // stopStreaming() potrà comunque fermare i track tramite streamRef
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => startStreaming();
+        videoRef.current.onloadedmetadata = () => {
+          // Adatta canvas alle dimensioni reali del video (evita distorsione su mobile)
+          if (canvasRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+          }
+          startStreaming();
+        };
+      } else {
+        // Componente già smontato quando la promise si è risolta: stop immediato
+        stopStreaming();
       }
     } catch (err) {
-      console.error("Errore webcam:", err);
+      console.error('Errore webcam:', err);
       setServerStatus({ text: 'Webcam non trovata', color: '#dc3545' });
     }
   };
@@ -102,18 +150,10 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
       const ctx = canvas.getContext('2d');
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.5); // Qualità bilanciata a 0.5 per alleggerire il carico di rete
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
 
       wsRef.current.send(JSON.stringify({ image: dataUrl }));
     }, 130);
-  };
-
-  const stopStreaming = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-    }
   };
 
   // Funzione di utilità per formattare i nomi delle cartelle in testo leggibile
@@ -154,10 +194,7 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
           left: 0,
           width: '100%',
           height: '100%',
-          border: `3px solid ${getBorderColor(displayConfidence)}`,
-          transition: 'border-color 0.4s ease',
-          overflow: 'hidden',
-          boxSizing: 'border-box',}}>
+          overflow: 'hidden',}}>
 
       {/* Box Webcam con overlay */}
       <video
@@ -208,8 +245,23 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
         </div>
       )}
 
+      {/* Placeholder: nessun esercizio ancora selezionato */}
+      {!selectedExercise && (
+        <>
+          <div className="top-status-overlay">
+            <div className="positioning-message">
+              Scorri in basso e seleziona un esercizio
+            </div>
+          </div>
+          <div className="no-exercise-placeholder">
+            <img src="/icons8-fotocamera-50.png" alt="" />
+            <p className="no-exercise-hint">La videocamera si attiverà appena avrai selezionato l'esercizio</p>
+          </div>
+        </>
+      )}
+
       {/* Messaggio di posizionamento + barra buffer - overlay assoluto in alto */}
-      {!isCountingActive && prediction.exercise && (
+      {!isCountingActive && selectedExercise && prediction.exercise && (
         <div className="top-status-overlay">
           <div className={`positioning-message${prediction.status === 'no_model' ? ' positioning-message--no-model' : ''}`}>
             {formatExerciseName(prediction.exercise)}

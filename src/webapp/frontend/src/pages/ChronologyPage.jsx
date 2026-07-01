@@ -1,225 +1,150 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useColor } from '../context/ColorContext';
 import { supabase } from '../SupabaseClient';
 import './ChronologyPage.css';
 import '../Dashboard.css';
 
-const ITEMS_PER_PAGE = 10;
-
-function ChronologyPage() {
+function EserciziSalvatiPage() {
   const navigate = useNavigate();
-  const userId = useMemo(() => {
-    const cached = localStorage.getItem('user');
-    return cached ? JSON.parse(cached)?.id : null;
-  }, []);
-
-  const [workouts, setWorkouts] = useState([]);
+  const { backgroundColor } = useColor();
+  const [piani, setPiani] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Carica gli allenamenti da Supabase
   useEffect(() => {
-    const loadWorkouts = async () => {
-      if (!userId) {
-        setError('Utente non autenticato');
-        setLoading(false);
-        return;
-      }
-
+    const caricaPiani = async () => {
       try {
         setLoading(true);
-        const { data, error: fetchError } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
           .from('allenamenti')
-          .select('*, esercizio(nome)')
-          .eq('utente', userId)
+          .select('piano_id, created_at, esercizi(*)')
+          .eq('utente', user.id)
           .order('created_at', { ascending: false });
 
-        if (fetchError) {
-          throw fetchError;
-        }
+        if (error) throw error;
 
-        setWorkouts(data || []);
-        console.log('Allenamenti caricati:', data);
+        // Raggruppa le righe per piano_id
+        const pianiMap = {};
+        for (const row of data) {
+          if (!pianiMap[row.piano_id]) {
+            pianiMap[row.piano_id] = {
+              id: row.piano_id,
+              salvataIl: row.created_at,
+              esercizi: [],
+            };
+          }
+          if (row.esercizi) pianiMap[row.piano_id].esercizi.push(row.esercizi);
+        }
+        setPiani(Object.values(pianiMap));
         setError(null);
-      } catch (err) {
-        console.error('Errore nel caricamento degli allenamenti:', err);
-        setError('Errore nel caricamento degli allenamenti. Verifica di avere completato almeno un allenamento.');
-        setWorkouts([]);
+      } catch (e) {
+        console.error('Errore caricamento piani:', e);
+        setError('Impossibile caricare i piani salvati.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadWorkouts();
-  }, [userId]);
+    caricaPiani();
+  }, []);
 
-  // Calcola le statistiche
-  const totalWorkouts = workouts.length;
-  const totalExercises = workouts.filter(w => w.completato === true).length;
-
-  // Paginazione
-  const totalPages = Math.ceil(totalWorkouts / ITEMS_PER_PAGE);
-  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIdx = startIdx + ITEMS_PER_PAGE;
-  const paginatedWorkouts = workouts.slice(startIdx, endIdx);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo(0, 0);
-    }
+  const handleAvvia = (piano) => {
+    localStorage.setItem('selectedExercises', JSON.stringify(piano.esercizi));
+    navigate('/allenamento');
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
+  const handleElimina = async (id) => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('it-IT', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      const { error } = await supabase
+        .from('allenamenti')
+        .delete()
+        .eq('piano_id', id);
+      if (error) throw error;
+      setPiani(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error('Errore eliminazione piano:', e);
+    }
+  };
+
+  const formatDate = (isoString) => {
+    try {
+      return new Date(isoString).toLocaleDateString('it-IT', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
       });
     } catch {
-      return dateString;
-    }
-  };
-
-  const getFeedbackEmoji = (feedback) => {
-    switch (feedback?.toLowerCase()) {
-      case 'facile':
-        return '😊';
-      case 'medio':
-        return '😐';
-      case 'difficile':
-        return '😞';
-      default:
-        return '-';
+      return isoString;
     }
   };
 
   return (
-    <div className="chronology-container">
+    <div className="chronology-container" style={{ '--colorvar': backgroundColor }}>
       <div className="glass-card chronology-card">
         <header className="chronology-header">
-          <h1>Cronologia Allenamenti</h1>
-          <button 
+          <h1 style={{ color: backgroundColor }}>I miei piani</h1>
+          <button
             type="button"
             onClick={() => navigate('/visualizza-esercizi')}
             className="goback-button"
+            style={{ backgroundColor }}
           >
-            Indietro
+            + Nuovo piano
           </button>
         </header>
 
         {loading ? (
-          <div className="chronology-loading">
-            <p>Caricamento allenamenti...</p>
-          </div>
+          <div className="chronology-empty"><p>Caricamento...</p></div>
         ) : error ? (
-          <div className="chronology-error">
-            <p>{error}</p>
-          </div>
-        ) : totalWorkouts === 0 ? (
+          <div className="chronology-empty"><p>{error}</p></div>
+        ) : piani.length === 0 ? (
           <div className="chronology-empty">
-            <p>Nessun allenamento registrato</p>
+            <p>
+              Nessun piano salvato. Vai nella galleria esercizi, scegli gli esercizi e
+              clicca su "Salva per dopo".
+            </p>
           </div>
         ) : (
-          <>
-            {/* Statistiche */}
-            <div className="chronology-stats">
-              <div className="stat-item">
-                <span className="stat-label">Allenamenti Totali</span>
-                <span className="stat-value">{totalWorkouts}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Esercizi Completati</span>
-                <span className="stat-value">{totalExercises}</span>
-              </div>
-            </div>
-
-            {/* Lista Allenamenti */}
-            <div className="workouts-list">
-              {paginatedWorkouts.map((workout, index) => (
-                <div key={workout.id || index} className="workout-item">
-                  <div className="workout-header">
-                    <span className="workout-date">{formatDate(workout.created_at)}</span>
-                    <span className="workout-feedback">{getFeedbackEmoji(workout.feedback)}</span>
-                  </div>
-                  
-                  <div className="workout-details">
-                    <div className="detail-row">
-                      <span className="detail-label">Nome:</span>
-                      <span className="detail-value">
-                        {workout.esercizio?.nome || '-'}
-                      </span>
-                    </div>
-                    
-                    <div className="detail-row">
-                      <span className="detail-label">Completato:</span>
-                      <span className="detail-value">
-                        {workout.completato ? '✓' : 'X'}
-                      </span>
-                    </div>
-                    
-                    {workout.feedback && (
-                      <div className="detail-row">
-                        <span className="detail-label">Feedback:</span>
-                        <span className="detail-value feedback-text">
-                          {workout.feedback}
-                        </span>
-                      </div>
-                    )}
-
-                    {workout.note && (
-                      <div className="detail-row full-width">
-                        <span className="detail-label">Note:</span>
-                        <p className="detail-note">{workout.note}</p>
-                      </div>
-                    )}
-                  </div>
+          <div className="workouts-list">
+            {piani.map((piano) => (
+              <div key={piano.id} className="workout-item">
+                <div className="workout-header">
+                  <span className="workout-date">{formatDate(piano.salvataIl)}</span>
+                  <span className="saved-exercise-count">
+                    {piano.esercizi.length} esercizi
+                  </span>
                 </div>
-              ))}
-            </div>
 
-            {/* Paginazione */}
-            {totalPages > 1 && (
-              <div className="chronology-pagination">
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className="pagination-button"
-                >
-                  ← Precedente
-                </button>
-                
-                <div className="pagination-info">
-                  Pagina {currentPage} di {totalPages}
+                <ul className="saved-exercise-list">
+                  {piano.esercizi.map((ex, i) => (
+                    <li key={ex.id || i}>{ex.nome}</li>
+                  ))}
+                </ul>
+
+                <div className="saved-plan-actions">
+                  <button
+                    type="button"
+                    className="btn-elimina"
+                    onClick={() => handleElimina(piano.id)}
+                  >
+                    Elimina
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-avvia"
+                    onClick={() => handleAvvia(piano)}
+                  >
+                    Avvia
+                  </button>
                 </div>
-                
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="pagination-button"
-                >
-                  Successiva →
-                </button>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-export default ChronologyPage;
+export default EserciziSalvatiPage;

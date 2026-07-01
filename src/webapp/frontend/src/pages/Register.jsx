@@ -108,37 +108,32 @@ function Register() {
     }
 
     try {
-      // STEP 1: Registrazione ufficiale su Supabase Auth
+      // UNICO STEP: Registrazione ufficiale + invio metadati
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          // Inseriamo i dati aggiuntivi nei metadata dell'utente
+          data: {
+            nome: formData.nome,
+            cognome: formData.cognome,
+            data_nascita: formData.data_nascita,
+            genere: formData.genere,
+          }
+        }
       });
 
       if (authError) throw authError;
 
-      // STEP 2: Inserimento dati extra nella tabella 'profili'
+      // Se la registrazione ha successo, la riga nella tabella 'profili' 
+      // viene creata AUTOMATICAMENTE sul database in una frazione di millisecondo.
       if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('profili')
-          .insert([
-            {
-              id: authData.user.id,
-              email: formData.email,
-              nome: formData.nome,
-              cognome: formData.cognome,
-              data_nascita: formData.data_nascita,
-              genere: formData.genere
-            },
-          ]);
-
-        if (profileError) throw profileError;
-        
         // Salva l'userId per il prossimo step
         setUserId(authData.user.id);
         // Passa al questionario
         setStep(2);
       }
-
+          
     } catch (err) {
       console.error('Errore:', err);
       setError(err.message || 'Errore durante la registrazione');
@@ -169,7 +164,7 @@ function Register() {
 
       if (updateError) throw updateError;
 
-      alert('Registrazione completata! Effettua l\'accesso per entrare!.');
+      alert('Registrazione completata! Conferma l\'email ed effettua l\'accesso per entrare!.');
       navigate('/login');
 
     } catch (err) {
@@ -228,7 +223,7 @@ function Register() {
                 ) : step === 2 ? (
                   <>
                     <h2>Un'esperienza personalizzata!</h2>
-                    <form>
+                    <form key="step2">
                         <div className="color-picker-label">
                           <label htmlFor="colore_ariu">Di che colore è il tuo divano Ariu?</label>
                           <div className="color-grid">
@@ -263,7 +258,7 @@ function Register() {
                 ) : step === 3 ? (
                   <>
                     <h2>Un'esperienza personalizzata!</h2>
-                    <form>
+                    <form key="step3">
                         <div className="form-gender-dropdown">
                           <label>Quanto tempo pensi di impiegare in media per l'attività fisica?</label>
                           <div className="time-list">
@@ -339,7 +334,7 @@ function Register() {
                 ) : step === 4 ? (
                   <>
                     <h2>Un'esperienza personalizzata!</h2>
-                    <form>
+                    <form key="step4">
                         <div className="form-gender-dropdown">
                           <label htmlFor="patologie">Soffri di particolari patologie?</label>
                           <div className="patologie-input-container">
@@ -388,7 +383,7 @@ function Register() {
                 ) : (
                   <>
                     <h2>Un'esperienza personalizzata!</h2>
-                    <form onSubmit={handleQuestionarioSubmit}>
+                    <form key="step5" onSubmit={handleQuestionarioSubmit}>
                         <div className="form-gender-dropdown">
                           <label>Quale trainer vuoi che ti assista nel tuo percorso?</label>
                           <div className="trainer-grid">

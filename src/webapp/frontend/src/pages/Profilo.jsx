@@ -103,7 +103,7 @@ function Row({ label, value }) {
 }
 
 export default function Profilo() {
-  const { backgroundColor } = useColor();
+  const { backgroundColor, updateColor } = useColor();
   const navigate = useNavigate();
   const token = useMemo(() => localStorage.getItem('token'), []);
   const userEmail = useMemo(() => {
@@ -129,6 +129,7 @@ export default function Profilo() {
   const [editTempo, setEditTempo] = useState('');
   const [editError, setEditError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Carica i dati del profilo da Supabase
   useEffect(() => {
@@ -212,6 +213,40 @@ export default function Profilo() {
   const patologie = userProfileData?.patologie || [];
   const tempo = userProfileData?.tempo || '';
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile e tutti i tuoi dati verranno cancellati.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      setEditError('');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utente non trovato');
+
+      const { error: deleteProfileError } = await supabase
+        .from('profili')
+        .delete()
+        .eq('id', user.id);
+      if (deleteProfileError) throw deleteProfileError;
+
+      await supabase.rpc('delete_user');
+
+      await supabase.auth.signOut();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('selectedExercises');
+      navigate('/welcome');
+    } catch (err) {
+      console.error('Errore eliminazione account:', err);
+      setEditError(err?.message || 'Errore durante l\'eliminazione del profilo.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleStartEdit = () => {
     setEditError('');
     setEditNome(userProfileData?.nome || '');
@@ -290,6 +325,7 @@ export default function Profilo() {
         tempo: editTempo
       });
 
+      updateColor(editColoreAriu);
       setIsEditing(false);
     } catch (err) {
       console.error('Errore nel salvataggio:', err);
@@ -522,6 +558,14 @@ export default function Profilo() {
                 </button>
                 <button className="form-button" onClick={() => navigate('/')} type="button">
                   Torna alla Home
+                </button>
+                <button
+                  className="form-button form-button--danger"
+                  onClick={handleDeleteAccount}
+                  type="button"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Eliminazione...' : 'Elimina account'}
                 </button>
               </>
             )}

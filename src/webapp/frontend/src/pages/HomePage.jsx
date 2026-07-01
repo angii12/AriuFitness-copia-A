@@ -3,6 +3,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useColor } from '../context/ColorContext';
 import './HomePage.css';
 import { supabase } from '../SupabaseClient';
+import TutorialOverlay from '../components/TutorialOverlay';
+
+const TUTORIAL_HOME = [
+  {
+    icon: '🏠',
+    title: 'Benvenuto su AriuFitness!',
+    desc: 'Qui trovi i programmi di allenamento predefiniti. Clicca Start su uno di essi per avviare subito la sessione con gli esercizi già selezionati.',
+  },
+  {
+    icon: '✏️',
+    title: 'Crea il tuo allenamento',
+    desc: 'Con il pulsante "Crea piano personalizzato" in basso a destra puoi scegliere esercizi singoli dalla galleria completa e costruire un programma su misura.',
+  },
+  {
+    icon: '🔖',
+    title: 'Ritrova i tuoi piani',
+    desc: 'Dal pulsante "Salvati" in alto puoi ritrovare i piani che hai messo da parte per usarli in futuro.',
+  },
+];
 
 function HomePage() {
   const { backgroundColor } = useColor();
@@ -155,9 +174,9 @@ function HomePage() {
   // --- LOGICA DI ORDINAMENTO DINAMICO ---
   const programmiOrdinati = useMemo(() => {
     // Definiamo la sequenza degli ID in base all'età
-    // Se l'età è maggiore o uguale a 50 -> [4, 5, 3, 2, 1]
-    // Se l'età è inferiore a 50 (o durante il caricamento) -> [1, 2, 3, 5, 4]
-    const ordineIds = eta >= 50 ? [4, 5, 3, 2, 1] : [1, 2, 3, 5, 4];
+    // Se l'età è maggiore o uguale a 60 -> [4, 5, 3, 2, 1]
+    // Se l'età è inferiore a 60 (o durante il caricamento) -> [1, 2, 3, 5, 4]
+    const ordineIds = eta >= 60 ? [4, 5, 3, 2, 1] : [1, 2, 3, 5, 4];
 
     // Ordiniamo l'array originale basandoci sulla posizione dell'ID nell'array 'ordineIds'
     return [...programmi].sort((a, b) => {
@@ -197,6 +216,7 @@ function HomePage() {
 
   return (
     <div className="home-container" style={{ backgroundColor }}>
+      <TutorialOverlay steps={TUTORIAL_HOME} storageKey="tutorial_visto_home" />
       <div className="panels-grid">
         {programmiOrdinati.map((prog) => {
           const isOpen = activeCardId === prog.id;
@@ -229,24 +249,16 @@ function HomePage() {
             </div>
           );
         })}
-        <div className="glass-panel" style={{'--bg-image': `url(/personalizzato.png)`}}>
-          <div className="panel-main-content">
-            <div className="panel-content">
-              <span className="panel-tag">ESERCIZI PERSONALIZZATI</span>
-              <h2 className="panel-title">CREA IL TUO ALLENAMENTO</h2>
-              <span className="panel-tag">Scegli tra oltre 60 esercizi e crea il tuo programma su misura</span>
-            </div>
-          </div>
-          <div className="bttn-container">
-            <button 
-              className="panel-button"
-              onClick={() => navigate('/visualizza-esercizi')}
-              >
-              Start
-              </button>
-          </div>
-        </div>
       </div>
+
+      <button
+        className="home-fab"
+        style={{ backgroundColor: `color-mix(in srgb, ${backgroundColor}, #000000 28%)` }}
+        onClick={() => navigate('/visualizza-esercizi')}
+      >
+        Crea piano personalizzato
+        <span className="home-fab-plus">+</span>
+      </button>
     </div>
   );
 }

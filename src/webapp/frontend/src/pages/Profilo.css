@@ -61,6 +61,23 @@
   box-shadow: 0 4px 15px rgba(0,0,0,0.12);
 }
 
+.form-button--danger {
+  background: #c1121f;
+  color: #ffffff;
+  border: none;
+}
+
+.form-button--danger:hover:not(:disabled) {
+  background: #a00d1a;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.18);
+}
+
+.form-button--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .profile-input {
   width: 100%;
   box-sizing: border-box;

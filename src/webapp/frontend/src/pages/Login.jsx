@@ -38,6 +38,17 @@ function Login() {
       localStorage.setItem('token', session.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      // 3. Carica le opzioni utente in localStorage per uso immediato
+      const { data: profilo } = await supabase
+        .from('profili')
+        .select('opzione_tutorial, opzione_tts')
+        .eq('id', data.user.id)
+        .single();
+      if (profilo) {
+        localStorage.setItem('tutorialMode', profilo.opzione_tutorial || 'sovrapposizione');
+        localStorage.setItem('ttsEnabled', profilo.opzione_tts !== false ? 'true' : 'false');
+      }
+
       navigate('/');
       window.location.reload();
     };

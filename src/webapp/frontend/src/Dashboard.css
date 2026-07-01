@@ -9,7 +9,6 @@
    1. LAYOUT PRINCIPALE E HEADER
    ================================= */
    .dashboard-container {
-    margin-top: 70px;
     flex-direction: column;
     padding: clamp(15px, 3vw, 20px);
     box-sizing: border-box;
@@ -292,10 +291,6 @@
 }
 
 @media (max-width: 480px) {
-  .dashboard-container {
-    padding: 10px;
-    margin-top: 60px;
-  }
   
   .main-view-grid {
     gap: 10px;
