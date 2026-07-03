@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { usePrediction } from '../context/PredictionContext';
 import './FitnessClassifier.css';
 
-const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinished, tutorialUrl, tutorialMode = 'sovrapposizione', reps, targetReps, ttsEnabled = true }) => {
+const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinished, tutorialUrl, tutorialMode = 'sovrapposizione', reps, targetReps, ttsEnabled = true, gateActive = false }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
@@ -15,9 +15,12 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
   const [serverStatus, setServerStatus] = useState({ text: 'Disconnesso', color: '#dc3545' });
 
   useEffect(() => {
-    console.log('Esercizio selezionato:', selectedExercise);
-    if (!selectedExercise) {
-      setServerStatus({ text: 'Seleziona un esercizio per iniziare', color: '#ffc107' });
+    console.log('Esercizio selezionato:', selectedExercise, 'gateActive:', gateActive);
+    if (!selectedExercise || gateActive) {
+      setServerStatus({
+        text: gateActive ? 'Ruota il telefono in orizzontale' : 'Seleziona un esercizio per iniziare',
+        color: '#ffc107',
+      });
       return;
     }
 
@@ -53,7 +56,7 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
       stopStreaming();
       if (wsRef.current) wsRef.current.close();
     };
-  }, [selectedExercise]);
+  }, [selectedExercise, gateActive]);
 
   // Garantisce lo spegnimento della webcam e la chiusura del WS qualunque sia
   // la causa dell'unmount, incluso il caso in cui getUserMedia si risolve dopo l'unmount

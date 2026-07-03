@@ -17,8 +17,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; 
-    transform: scaleX(-1); 
+    pointer-events: none;
+    transform: scaleX(-1);
 }
 
 .continue-button{
@@ -38,7 +38,7 @@
     background: #0c6b1e;
 }
 
-.info-card{height: stretch;}
+.info-card{ overflow-x: hidden; }
 
 /* =================================
    LISTA ESERCIZI — numero + icona stato
@@ -101,23 +101,10 @@
 }
 
 /* =================================
-   MODALITÀ DIVISO
+   MODALITÀ DIVISO — portrait / tablet
+   Affiancati da 600px in su (solo fuori landscape)
    ================================= */
-
-/* In modalità diviso: colonna su telefono, affiancati da tablet in su */
-.main-view-grid--diviso {
-    flex-direction: column !important;
-}
-
-@media (min-width: 600px) {
-    .main-view-grid--diviso {
-        flex-direction: row !important;
-        align-items: flex-start;
-    }
-}
-
-/* Modalità diviso: entrambi i pannelli diventano quadrati */
-.main-view-grid--diviso #webcam-panel {
+.workout-area--diviso:not(.workout-area--landscape) #webcam-panel {
     aspect-ratio: 1 / 1 !important;
 }
 
@@ -131,9 +118,15 @@
     object-position: center !important;
 }
 
+@media (min-width: 600px) {
+    .workout-area--diviso:not(.workout-area--landscape) {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
 /* =================================
    OVERLAY CALIBRAZIONE
-   Nessuno sfondo opaco: la webcam rimane visibile sopra
    ================================= */
 .calibration-overlay {
     position: fixed;
@@ -144,44 +137,36 @@
     display: flex;
     justify-content: center;
     padding: 0 16px clamp(20px, 5vh, 40px);
-    pointer-events: none; /* lascia passare i clic al di sopra */
+    pointer-events: none;
 }
 
 .calibration-content {
     pointer-events: auto;
     text-align: center;
-    max-width: min(420px, 92vw);
+    max-width: min(280px, 88vw);
     width: 100%;
     background: rgba(255, 255, 255, 0.97) !important;
-    border-radius: 20px !important;
-    padding: clamp(16px, 4vw, 24px) clamp(16px, 4vw, 28px) !important;
+    border-radius: 16px !important;
+    padding: 12px 20px 16px !important;
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.18),
                 0 8px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
 .calibration-icon {
-    font-size: clamp(1.8rem, 5vw, 2.4rem);
-    margin: 0 0 4px 0;
+    font-size: 1.6rem;
+    margin: 0 0 2px 0;
     line-height: 1;
 }
 
 .calibration-title {
-    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-size: 0.85rem;
     font-weight: 800;
     color: #1a1a1a;
-    margin: 0 0 8px 0;
+    margin: 0 0 10px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
-.calibration-message {
-    font-size: clamp(0.82rem, 2.2vw, 0.93rem);
-    color: #555;
-    line-height: 1.5;
-    margin: 0 0 14px 0;
-}
-
-/* Puntini animati - indicano l'attesa della detection */
 .calibration-scanning {
     display: flex;
     justify-content: center;
@@ -204,19 +189,54 @@
     40%           { opacity: 1;    transform: scale(1); }
 }
 
-
 /* =================================
-   MEDIA QUERIES - RESPONSIVE DESIGN
+   MEDIA QUERIES — DESKTOP (≥769px)
+   Pannelli in riga, formato quadrato 1:1, nessun scroll di pagina
    ================================= */
-
-
 @media (min-width: 769px) {
-    .main-view-grid {
-        flex-direction: row; /* Affiancati su desktop */
-        align-items: flex-start;
+    /* Dashboard: altezza fissa al viewport, nessun overflow */
+    .dashboard-container:not(.dashboard-container--landscape) {
+        height: calc(100vh - 56px);
+        overflow: hidden;
+        box-sizing: border-box;
     }
-    .video-panel, .info-card {
+
+    /* Workout area: riga flex che riempie l'altezza disponibile */
+    .workout-area:not(.workout-area--landscape) {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(16px, 2vw, 20px);
         flex: 1;
+        min-height: 0;
+        margin-bottom: 0;
+        overflow: hidden;
+    }
+
+    /* Ogni pannello: quadrato 1:1, scala fino all'altezza disponibile */
+    .workout-area:not(.workout-area--landscape) .video-panel,
+    .workout-area:not(.workout-area--landscape) #workout-list-panel {
+        flex: 1;
+        aspect-ratio: 1 / 1;
+        max-height: 100%;
+        min-width: 0;
+        width: auto;
+    }
+
+    /* Override aspect-ratio 9/16 e max-width da Dashboard.css */
+    .workout-area:not(.workout-area--landscape) .video-panel {
+        aspect-ratio: 1 / 1;
+    }
+    .workout-area:not(.workout-area--landscape) #webcam-panel,
+    .workout-area:not(.workout-area--landscape) #tutorial-panel {
+        max-width: none;
+    }
+
+    /* Lista: solo scroll verticale interno, no orizzontale */
+    .workout-area:not(.workout-area--landscape) #workout-list-panel {
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 }
 
@@ -239,4 +259,148 @@
     .feedback-faces{
         gap: 4px;
     }
+}
+
+/* =================================
+   LANDSCAPE GATE
+   Overlay a schermo intero su mobile portrait
+   ================================= */
+.landscape-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.landscape-gate-content {
+    text-align: center;
+    color: #ffffff;
+    padding: 24px;
+}
+
+.landscape-gate-icon {
+    display: block;
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    animation: rotate-hint 2s ease-in-out infinite;
+}
+
+@keyframes rotate-hint {
+    0%, 100% { transform: rotate(0deg); }
+    50%       { transform: rotate(-90deg); }
+}
+
+.landscape-gate-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.6;
+    max-width: 260px;
+    margin: 0 auto;
+}
+
+/* =================================
+   LAYOUT LANDSCAPE MOBILE
+   ================================= */
+
+/* Rimuovi padding dashboard in landscape per massimizzare lo spazio */
+.dashboard-container--landscape {
+    padding: 0;
+}
+
+/* Base landscape: flex row — tutti i pannelli visibili stessa altezza */
+.workout-area--landscape {
+    display: flex !important;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 0;
+    height: calc(100svh - 56px);
+    box-sizing: border-box;
+}
+
+/* Ogni pannello occupa la stessa larghezza; i pannelli nascosti (display:none) non tolgono spazio */
+.workout-area--landscape .video-panel,
+.workout-area--landscape #workout-list-panel {
+    flex: 1;
+    min-width: 0;
+}
+
+/* max-width annullato in landscape */
+.workout-area--landscape #webcam-panel,
+.workout-area--landscape #tutorial-panel {
+    max-width: none;
+    aspect-ratio: unset;
+}
+
+/* Pannelli landscape: niente aspect-ratio, riempiono tutta l'altezza */
+.workout-area--landscape .video-panel {
+    aspect-ratio: unset;
+    height: 100%;
+    border-radius: 15px;
+}
+
+/* Lista in landscape: scrollabile, ancorata in alto, stessa altezza */
+.workout-area--landscape #workout-list-panel {
+    overflow-y: auto;
+    border-radius: 15px;
+    height: 100%;
+    justify-content: flex-start;
+}
+
+/* =================================
+   PULSANTE SALTA / PROSSIMO ESERCIZIO
+   Overlay assoluto in cima al pannello tutorial (o webcam in sovrapposizione)
+   ================================= */
+.panel-skip-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 15;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.88);
+    color: #5B120F;
+    border: 2px solid rgba(91, 18, 15, 0.5);
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    line-height: 1;
+}
+
+.panel-skip-btn:hover {
+    background: #5B120F;
+    color: #ffffff;
+    border-color: #5B120F;
+}
+
+/* Stato "esercizio concluso": pulsante si trasforma in Prossimo */
+.panel-skip-btn--next {
+    background: var(--colorvar, #5B120F);
+    color: #ffffff;
+    border-color: var(--colorvar, #5B120F);
+    animation: pulse-next-btn 1.8s ease-in-out infinite;
+}
+
+.panel-skip-btn--next:hover {
+    opacity: 0.85;
+    background: var(--colorvar, #5B120F);
+    color: #ffffff;
+}
+
+@keyframes pulse-next-btn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.25); }
+    50%       { box-shadow: 0 0 0 7px rgba(0, 0, 0, 0); }
 }

@@ -25,6 +25,9 @@
   top: calc(100% + 12px);
   right: 0;
   min-width: 220px;
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
@@ -79,7 +82,7 @@
   color: #ff4444;
 }
 
-/* ── Mobile: menu a larghezza piena ── */
+/* ── Mobile portrait: menu a larghezza piena ── */
 @media (max-width: 480px) {
   .hamburger-menu {
     position: fixed;
@@ -88,5 +91,16 @@
     left: 12px;
     min-width: unset;
     border-radius: 16px;
+    max-height: calc(100dvh - 82px);
+  }
+}
+
+/* ── Mobile landscape: schermo basso, menu fisso e compatto ── */
+@media (max-height: 500px) {
+  .hamburger-menu {
+    position: fixed;
+    top: 56px;
+    right: 12px;
+    max-height: calc(100dvh - 68px);
   }
 }

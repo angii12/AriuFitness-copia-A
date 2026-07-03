@@ -8,6 +8,7 @@ import '../Dashboard.css';
 import './ClassificationPage.css';
 import FitnessClassifier from '../components/FitnessClassifier';
 import TutorialOverlay from '../components/TutorialOverlay';
+import { useLandscapeGate } from '../hooks/useLandscapeGate';
 
 const TUTORIAL_CLASSIFICAZIONE = [
   {
@@ -86,15 +87,15 @@ function ClassificationPage() {
   const trySpeakRef = useRef(null);
 
   const { backgroundColor } = useColor();
+  const { isBlocked, isMobileLandscape } = useLandscapeGate();
 
   useEffect(() => {
     isCountingActiveRef.current = isCountingActive;
   }, [isCountingActive]);
 
   useEffect(() => {
-    const scrollTarget = Math.max(0, currentExerciseIndex - 1);
-    if (currentExerciseIndex > 0 && exerciseRefs.current[scrollTarget]) {
-      exerciseRefs.current[scrollTarget].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (exerciseRefs.current[currentExerciseIndex]) {
+      exerciseRefs.current[currentExerciseIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [currentExerciseIndex]);
 
@@ -479,6 +480,10 @@ function ClassificationPage() {
         setSelectedTutorial(exercise.video_tut_url);
       }
       resetExerciseRuntimeState();
+      // Desktop: riporta in cima alla pagina
+      if (!navigator.maxTouchPoints) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
@@ -591,14 +596,24 @@ function ClassificationPage() {
   // --- JSX RENDER ---
   return (
     <div
-      className="dashboard-container"
+      className={`dashboard-container${isMobileLandscape ? ' dashboard-container--landscape' : ''}`}
       style={{ '--colorvar': backgroundColor }}
     >
       <TutorialOverlay steps={TUTORIAL_CLASSIFICAZIONE} storageKey="tutorial_visto_classificazione" />
+
+      {/* Gate landscape: blocca l'uso in portrait su mobile */}
+      {isBlocked && (
+        <div className="landscape-gate">
+          <div className="landscape-gate-content">
+            <span className="landscape-gate-icon">📱</span>
+            <p className="landscape-gate-text">Ruota il telefono in orizzontale per continuare</p>
+          </div>
+        </div>
+      )}
+
+      {/* Area principale — struttura piatta: webcam | tutorial | lista */}
       <div
-        className={`main-view-grid${
-          tutorialMode === 'diviso' ? ' main-view-grid--diviso' : ''
-        }`}
+        className={`workout-area workout-area--${tutorialMode}${isMobileLandscape ? ' workout-area--landscape' : ''}`}
       >
         {/* Pannello Webcam - sempre montato per l'IA */}
         <div
@@ -620,21 +635,40 @@ function ClassificationPage() {
               reps={reps}
               targetReps={currentTargetReps}
               ttsEnabled={ttsEnabled}
+              gateActive={isBlocked}
             />
           </div>
+          {/* Salta/Prossimo overlay — solo in sovrapposizione (tutorial panel nascosto) */}
+          {tutorialPanelHidden && selectedExercise && currentExerciseIndex < selectedExercises.length - 1 && (
+            <button
+              className={`panel-skip-btn${isExerciseFinished ? ' panel-skip-btn--next' : ''}`}
+              onClick={() => isExerciseFinished ? setIsFeedbackModalVisible(true) : handleSkipExercise()}
+            >
+              {isExerciseFinished ? '✓' : '>>'}
+            </button>
+          )}
         </div>
 
         {/* Pannello Tutorial (diviso / solo-tutorial) */}
         <div
           id="tutorial-panel"
           className={`video-panel glass-card${tutorialPanelHidden ? ' panel-hidden' : ''}${
-            tutorialMode === 'diviso' ? ' tutorial-panel--diviso' : ''
+            tutorialMode === 'diviso' && !isMobileLandscape ? ' tutorial-panel--diviso' : ''
           }`}
           style={tutorialMode === 'solo-tutorial' ? {
             border: `5px solid ${getConfidenceBorderColor(displayConfidence)}`,
             transition: 'border-color 0.4s ease',
           } : undefined}
         >
+          {/* Salta/Prossimo overlay — diviso e solo-tutorial */}
+          {selectedExercise && currentExerciseIndex < selectedExercises.length - 1 && (
+            <button
+              className={`panel-skip-btn${isExerciseFinished ? ' panel-skip-btn--next' : ''}`}
+              onClick={() => isExerciseFinished ? setIsFeedbackModalVisible(true) : handleSkipExercise()}
+            >
+              {isExerciseFinished ? '✓' : '›'}
+            </button>
+          )}
           <div className="video-container">
             {selectedTutorial ? (
               <video
@@ -674,13 +708,12 @@ function ClassificationPage() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Lista esercizi */}
-      <div
-        id="workout-list-panel"
-        className="info-card glass-card workout-list-card"
-      >
+        {/* Lista esercizi */}
+        <div
+          id="workout-list-panel"
+          className="info-card glass-card workout-list-card"
+        >
         <h3>ESERCIZI SELEZIONATI</h3>
         {prediction.status === 'no_model' && selectedExercise && (
           <div className="no-model-warning">
@@ -726,14 +759,6 @@ function ClassificationPage() {
           )}
         {selectedExercise && (
           <div className="action-buttons-container">
-            {currentExerciseIndex < selectedExercises.length - 1 && (
-              <button
-                className="finish-exercise-button"
-                onClick={() => isExerciseFinished ? setIsFeedbackModalVisible(true) : handleSkipExercise()}
-              >
-                {isExerciseFinished ? 'Prossimo Esercizio' : 'Salta Esercizio'}
-              </button>
-            )}
             <button
               className="finish-workout-button"
               onClick={() => setIsWorkoutFeedbackModalVisible(true)}
@@ -742,6 +767,7 @@ function ClassificationPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
       {/* Modal feedback esercizio */}
@@ -810,10 +836,6 @@ function ClassificationPage() {
           <div className="calibration-content glass-card">
             <p className="calibration-icon">&#128247;</p>
             <h3 className="calibration-title">Calibrazione</h3>
-            <p className="calibration-message">
-              Allontanati e assicurati che tutto il corpo sia visibile nella
-              telecamera. L'allenamento partirà automaticamente.
-            </p>
             <div className="calibration-scanning">
               <span className="calibration-dot" />
               <span className="calibration-dot" />

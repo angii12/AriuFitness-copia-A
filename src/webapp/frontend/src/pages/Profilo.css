@@ -4,9 +4,10 @@
 
 /* --- Profilo: coerente con form-card --- */
 .profile-card {
-    /* riusa .form-card ma con un tocco di separazione interna */
     gap: 14px;
+    margin-top: 0;
 }
+
 
 .profile-avatar {
   width: 100px;
@@ -108,6 +109,7 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
+    overflow: visible;
 }
 
 /* riquadro interno, eredita font/colore dalla glass card */

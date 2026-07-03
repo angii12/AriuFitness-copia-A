@@ -29,10 +29,30 @@ CORRECTION_COOLDOWN = 5    # secondi minimi tra feedback correttivi
 LLM_INTERVAL = 15          # secondi tra feedback motivazionali
 DEFAULT_TARGET_REPS = 5
 
+# Frase esatta della correzione "ginocchia oltre la punta dei piedi" (medicine_ball_squat).
+# Usata come chiave di confronto per riconoscere quando applicare la gradazione di gravità.
+_KNEE_FORWARD_CORRECTION = reps_tracker.FEEDBACK_MESSAGES['medicine_ball_squat']['correction_knee_forward']
+
+# Rapporto (ratio / soglia) oltre il quale l'errore ginocchia-in-avanti è considerato "marcato"
+# invece che "lieve". Valore di partenza, da tarare insieme a KNEE_FORWARD_RATIO_THRESHOLD
+# in reps_tracker.py con dati reali di webcam.
+_KNEE_FORWARD_SEVERE_RATIO = 1.6
+
+# Frase esatta della correzione "braccia piegate" (overhead_ball_side_bends).
+_ARMS_BENT_CORRECTION = reps_tracker.FEEDBACK_MESSAGES['overhead_ball_side_bends']['correction_arms']
+ 
+# Gradi sotto ARM_EXTENSION_THRESHOLD oltre i quali l'errore braccia-piegate è considerato
+# "marcato" invece che "lieve" (es. soglia 125° e gomito misurato a 100° → 25° di scarto).
+_ARMS_BENT_SEVERE_DEFICIT_DEG = 20.0
+
+
 _SYSTEM_PROMPT_CORREZIONE = (
     "Sei un trainer fitness. Riformula il messaggio di correzione che ti viene dato in modo "
     "naturale, diretto e incoraggiante in italiano. Massimo 10 parole, 1 frase. "
     "Mantieni il significato preciso della correzione — non inventare correzioni diverse. "
+    "Conserva SEMPRE il riferimento alla parte del corpo o al gesto indicato (es. ginocchia, busto, gambe) - non genericizzare"
+    "in un richiamo vago tipo 'attenzione alla postura'."
+    "Se viene indicata una gravità 'marcata', usa un tono più deciso e urgente; se 'lieve', un tono più leggero, quasi un promemoria"
     "Varia leggermente il fraseggio rispetto alla versione originale. "
     "Rispondi SOLO con la frase riformulata, senza saluti, emoji o prefissi."
 )
@@ -43,6 +63,70 @@ _SYSTEM_PROMPT_MOTIVAZIONE = (
     "Rispondi SOLO con la frase, senza saluti, emoji o prefissi."
 )
 
+def _knee_forward_severity(tracker: reps_tracker.ExerciseTracker) -> str | None:
+    """
+    Determina la gravità dell'errore "ginocchia oltre la punta dei piedi" nello squat.
+ 
+    Ritorna 'lieve' o 'marcata' solo se la correzione attiva in questo frame è
+    esattamente quella ginocchia-in-avanti; altrimenti None (nessun'altra correzione
+    dello squat, o altro esercizio, viene "graduata" da questa funzione).
+ 
+    Args:
+    - tracker: l'istanza di ExerciseTracker della sessione corrente
+ 
+    Returns:
+    - str | None: 'lieve', 'marcata', oppure None se non applicabile
+    """
+    if tracker.get_last_correction_phrase() != _KNEE_FORWARD_CORRECTION:
+        return None
+ 
+    ratio = tracker.get_last_knee_forward_ratio()
+    if ratio is None:
+        return None
+ 
+    rel = ratio / reps_tracker.ExerciseTracker.KNEE_FORWARD_RATIO_THRESHOLD
+    return "marcata" if rel >= _KNEE_FORWARD_SEVERE_RATIO else "lieve"
+
+def _arms_bent_severity(tracker: reps_tracker.ExerciseTracker) -> str | None:
+    """
+    Determina la gravità dell'errore "braccia piegate" in overhead_ball_side_bends,
+    con la stessa logica di _knee_forward_severity: None se la correzione attiva in
+    questo frame non è esattamente quella, altrimenti 'lieve' o 'marcata' in base a
+    quanti gradi sotto soglia è sceso il gomito peggiore della ripetizione.
+ 
+    Args:
+    - tracker: l'istanza di ExerciseTracker della sessione corrente
+ 
+    Returns:
+    - str | None: 'lieve', 'marcata', oppure None se non applicabile
+    """
+    if tracker.get_last_correction_phrase() != _ARMS_BENT_CORRECTION:
+        return None
+ 
+    min_elbow = tracker.get_last_min_elbow_angle()
+    if min_elbow is None:
+        return None
+ 
+    deficit_deg = reps_tracker.ExerciseTracker.ARM_EXTENSION_THRESHOLD - min_elbow
+    return "marcata" if deficit_deg >= _ARMS_BENT_SEVERE_DEFICIT_DEG else "lieve"
+ 
+ 
+def _correction_severity(tracker: reps_tracker.ExerciseTracker) -> str | None:
+    """
+    Calcola una gravità testuale ('lieve'/'marcata') per le correzioni che la
+    supportano. Ritorna None per le correzioni senza gradazione (es. tronco,
+    simmetria, profondità...) o per il feedback puramente motivazionale.
+ 
+    Per aggiungere una nuova correzione graduata in futuro: scrivere una funzione
+    _xxx_severity() sullo stesso modello di _knee_forward_severity /
+    _arms_bent_severity e aggiungerla qui nell'OR — sono mutuamente esclusive
+    perché ogni frame ha al più una correzione attiva.
+    """
+    return (
+        _knee_forward_severity(tracker)
+        or _arms_bent_severity(tracker)
+    )
+
 
 async def genera_feedback_llm(
     esercizio: str,
@@ -50,6 +134,7 @@ async def genera_feedback_llm(
     reps: int,
     is_correcting: bool,
     correction_phrase: str | None,
+    gravita: str | None = None,
 ) -> str | None:
     if groq_client is None:
         return None
@@ -60,6 +145,7 @@ async def genera_feedback_llm(
             user_msg = (
                 f"Esercizio: {esercizio.replace('_', ' ')}\n"
                 f"Correzione da comunicare: \"{correction_phrase}\"\n"
+                f"Gravità: {gravita}\n"
                 f"Riformula questa correzione specifica in modo naturale e diretto."
             )
         else:
@@ -347,6 +433,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     or (current_time - last_feedback_time >= LLM_INTERVAL)
                 )
             ):
+                gravita = _correction_severity(tracker) if tracker.get_is_correcting() else None
+
                 last_feedback_time = current_time
                 llm_task = asyncio.create_task(
                     genera_feedback_llm(
@@ -355,6 +443,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         tracker.get_reps(),
                         tracker.get_is_correcting(),
                         tracker.get_last_correction_phrase(),
+                        gravita,
                     )
                 )
 

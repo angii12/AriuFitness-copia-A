@@ -21,7 +21,9 @@ const GlobalHeader = () => {
     location.pathname === '/welcome';
 
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const menuRef = useRef(null);
+  const scrollStates = useRef(new Map());
 
   useEffect(() => {
     const onClick = (e) => {
@@ -30,6 +32,24 @@ const GlobalHeader = () => {
     document.addEventListener('click', onClick);
     return () => document.removeEventListener('click', onClick);
   }, []);
+
+  useEffect(() => {
+    const onScroll = (e) => {
+      const target = e.target === document ? document.documentElement : e.target;
+      const currentY = target.scrollTop;
+      const lastY = scrollStates.current.get(target) ?? 0;
+      if (currentY < 10) {
+        setHidden(false);
+      } else if (currentY > lastY && !open) {
+        setHidden(true);
+      } else if (currentY < lastY) {
+        setHidden(false);
+      }
+      scrollStates.current.set(target, currentY);
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', onScroll, { capture: true });
+  }, [open]);
 
   // chiudi il menu ad ogni cambio di pagina
   useEffect(() => { setOpen(false); }, [location.pathname]);
@@ -43,7 +63,7 @@ const GlobalHeader = () => {
   if (hideHeader) return null;
 
   return (
-    <header className="global-header">
+    <header className={`global-header${hidden ? ' global-header--hidden' : ''}`}>
       <div className="brand-section">
         <span className="app-title-global">Ariu</span>
         <span className="app-title-global second">Fitness</span>

@@ -41,12 +41,13 @@ function Login() {
       // 3. Carica le opzioni utente in localStorage per uso immediato
       const { data: profilo } = await supabase
         .from('profili')
-        .select('opzione_tutorial, opzione_tts')
+        .select('opzione_tutorial, opzione_tts, tutorial_visti')
         .eq('id', data.user.id)
         .single();
       if (profilo) {
         localStorage.setItem('tutorialMode', profilo.opzione_tutorial || 'sovrapposizione');
         localStorage.setItem('ttsEnabled', profilo.opzione_tts !== false ? 'true' : 'false');
+        localStorage.setItem('tutorial_visti', JSON.stringify(profilo.tutorial_visti || []));
       }
 
       navigate('/');

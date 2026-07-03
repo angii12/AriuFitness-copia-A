@@ -244,7 +244,7 @@
 
   .panels-grid {
     position: relative;
-    margin-top: 80px;
+    margin-top: 10px;
     flex-direction: row; /* Torna in orizzontale su PC */
     flex-wrap: wrap; /* Permette ai pannelli di andare a capo se sono molti */
     justify-content: center; /* Centra i pannelli */

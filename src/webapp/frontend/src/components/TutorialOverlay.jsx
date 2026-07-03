@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useColor } from '../context/ColorContext';
+import { supabase } from '../SupabaseClient';
 import './TutorialOverlay.css';
 
 function TutorialOverlay({ steps, storageKey }) {
@@ -8,13 +9,25 @@ function TutorialOverlay({ steps, storageKey }) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (!localStorage.getItem(storageKey)) {
+    const visti = JSON.parse(localStorage.getItem('tutorial_visti') || '[]');
+    if (!visti.includes(storageKey)) {
       setVisible(true);
     }
   }, [storageKey]);
 
-  const dismiss = () => {
-    localStorage.setItem(storageKey, 'true');
+  const dismiss = async () => {
+    const visti = JSON.parse(localStorage.getItem('tutorial_visti') || '[]');
+    if (!visti.includes(storageKey)) {
+      const nuovi = [...visti, storageKey];
+      localStorage.setItem('tutorial_visti', JSON.stringify(nuovi));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profili')
+          .update({ tutorial_visti: nuovi })
+          .eq('id', user.id);
+      }
+    }
     setVisible(false);
   };
 
