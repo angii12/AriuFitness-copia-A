@@ -7,10 +7,7 @@
   --text-color: #2d2d2d;
   --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
-  --page-bg-color: #5B120F;
-  /*--background-main: #f5e6d3;
-  --card-bg: #ffffff;
-  --border-light: #d4c4b0;*/
+  --page-bg-color: #ffffff;
 }
 
 body {
@@ -66,7 +63,6 @@ button:focus-visible {
 
 .glass-card {
   background: #ffffff;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
   border-radius: 20px;
   border: 1px solid #ffffff;
   padding: clamp(20px, 5vw, 40px);
@@ -74,25 +70,30 @@ button:focus-visible {
 }
 
 .global-header {
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   padding: clamp(12px, 3vw, 15px) clamp(15px, 5vw, 30px);
   background: #ffffff2d;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
   z-index: 100;
   box-sizing: border-box;
   flex-wrap: wrap;
+  transition: transform 0.3s ease;
+}
+
+.global-header--hidden {
+  transform: translateY(-110%);
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 15px; /* Spazio tra logo e testo */
+  gap: 2px; /* Spazio tra logo e testo */
 }
 
 /* --- Il TITOLO "FitnessAI " --- */
@@ -104,6 +105,9 @@ button:focus-visible {
   letter-spacing: 2px;
   color: #5B120F;
   text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+}
+.second{
+  color: #7a7968;
 }
 
 .welcome-title {
@@ -140,6 +144,11 @@ button:focus-visible {
   height: 100%;
   display: flex;
   flex-direction: column;
+  width: 100%;
+}
+
+.page-content {
+  padding-top: 56px;
 }
 
 /*

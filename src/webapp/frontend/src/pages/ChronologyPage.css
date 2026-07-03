@@ -8,7 +8,6 @@
   min-height: calc(100vh - 80px);
   padding: clamp(15px, 5vw, 30px);
   box-sizing: border-box;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
 }
 
 .chronology-card {
@@ -368,6 +367,74 @@
     font-size: 0.75rem;
     min-width: 100px;
   }
+}
+
+/* ============================================
+   ESERCIZI SALVATI
+   ============================================ */
+
+.saved-exercise-count {
+  font-size: clamp(0.78rem, 1.6vw, 0.88rem);
+  color: var(--colorvar, #8b5a3c);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--colorvar, #8b5a3c), #ffffff 85%);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.saved-exercise-list {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+  color: #2d2d2d;
+  font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+  line-height: 1.85;
+  list-style: disc;
+}
+
+.saved-plan-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-avvia {
+  padding: clamp(7px, 1.5vw, 9px) clamp(18px, 3vw, 24px);
+  background: var(--colorvar, #8b5a3c);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-avvia:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-elimina {
+  padding: clamp(7px, 1.5vw, 9px) clamp(14px, 2.5vw, 18px);
+  background: transparent;
+  color: #c1121f;
+  border: 1.5px solid #c1121f;
+  border-radius: 8px;
+  font-size: clamp(0.82rem, 1.8vw, 0.92rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-elimina:hover {
+  background: #fce4e6;
+  transform: translateY(-2px);
 }
 
 /* ============================================

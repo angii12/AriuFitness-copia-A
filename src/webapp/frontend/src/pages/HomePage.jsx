@@ -3,12 +3,32 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useColor } from '../context/ColorContext';
 import './HomePage.css';
 import { supabase } from '../SupabaseClient';
+import TutorialOverlay from '../components/TutorialOverlay';
+
+const TUTORIAL_HOME = [
+  {
+    icon: '🏠',
+    title: 'Benvenuto su AriuFitness!',
+    desc: 'Qui trovi i programmi di allenamento predefiniti. Clicca Start su uno di essi per avviare subito la sessione con gli esercizi già selezionati.',
+  },
+  {
+    icon: '✏️',
+    title: 'Crea il tuo allenamento',
+    desc: 'Con il pulsante "Crea piano personalizzato" in basso a destra puoi scegliere esercizi singoli dalla galleria completa e costruire un programma su misura.',
+  },
+  {
+    icon: '🔖',
+    title: 'Ritrova i tuoi piani',
+    desc: 'Dal pulsante "Salvati" in alto puoi ritrovare i piani che hai messo da parte per usarli in futuro.',
+  },
+];
 
 function HomePage() {
   const { backgroundColor } = useColor();
   
   // Stato per gestire quale card è aperta
   const [activeCardId, setActiveCardId] = useState(null);
+  const [loadingProgramId, setLoadingProgramId] = useState(null);
 
   // --- STATO PER L'ETÀ DELL'UTENTE ---
   const [eta, setEta] = useState(null);
@@ -21,31 +41,88 @@ function HomePage() {
       id: 1, 
       titolo: "TONIFICAZIONE", 
       immagine: "/tonificazione.png",
-      allenamenti: ["Full Body Tonificazione", "Focus Addome & Glutei", "Upper Body Sculpt", "Placeholder", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: ["Crunch con fitball dietro la schiena", "Plank con gomiti sulla fitball", "Plank con gomiti sulla fitball", "Russian Twist",
+                   "Russian Twist (con piedi a terra)", "Dead bug", "Sollevamento gambe stringendo la fitball", "Hollow hold", "Fitball overhead roll-up",
+                    "Fitball elevated leg crunches", "Squat contro il muro", "Affondi con piede posteriore sulla fitball", "Sumo squat", "Estesioni braccia e gambe",
+                    "Addominali laterali", "Fitball push-up", "Medicine ball squat", "Wall sit con rotazione fitball"],
+      descrizione: "18 esercizi - 1 ora di allenamento"
     },
     { 
       id: 2, 
       titolo: "DIMAGRIMENTO", 
       immagine: "/dimagrimento.png",
-      allenamenti: ["Cardio HIIT", "Brucia Grassi Intenso", "Circuit Training"]
+      allenamenti: [
+        "Burpee con fitball", 
+        "Stability ball mountain climbers", 
+        "Medicine ball knee tucks", 
+        "Medicine ball sit-up", 
+        "Sit-up throw", 
+        "Medicine chest press", 
+        "Medicine ball-burpes (con push-up sulla spalla)", 
+        "Medicine ball thrusters",  
+        "Affondi con palla medica", 
+        "Slam ball", 
+        "Wall ball sit-ups", 
+        "Affondo indietro con torsione disco", 
+        "Estensione tricipiti sopra la testa", 
+        "Ball toe taps"
+      ],
+      descrizione: "15 esercizi - 50 minuti di allenamento"
     },
     { 
       id: 3, 
       titolo: "FLESSIBILITÀ TOTALE E STRETCHING", 
       immagine: "/flessibilità-totale-e-stretching.png",
-      allenamenti: ["Stretching Mattutino", "Mobilità Articolare", "Yoga Flex", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Pelvic tilts", 
+        "Fitball laterals shisfts", 
+        "Medicine ball halos", 
+        "Fitball back extensions", 
+        "Kneeling stability stretch", 
+        "Overhead ball side bends", 
+        "Side lean with leg support", 
+        "Arm raises on fitball", 
+        "Swiss ball child pose", 
+        "Allenamento dello psoas su fitball", 
+        "Stretching pettorali con fitball", 
+        "Mobilità bacino fitball"
+      ],
+      descrizione: "12 esercizi - 40 minuti di allenamento"
     },
     { 
       id: 4, 
       titolo: "SALUTE DELLE ARTICOLAZIONI", 
       immagine: "/salute-delle-articolazioni.png",
-      allenamenti: ["Rinforzo Ginocchia", "Posturale Schiena", "Mobilità Spalle", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Braccia con miniball", 
+        "Lateral flexion con la fitball",
+        "Flessioni frontali delle braccia",
+        "Inclinazione laterale del tronco",
+        "Sollevamento frontale delle braccia",
+        "Sollevamento sulle punte dei piedi",
+        "Squat con palla al petto",
+        "Flessione del busto in avanti"
+      ],
+      descrizione: "9 esercizi - 30 minuti di allenamento"
     },
     { 
       id: 5, 
       titolo: "EQUILIBRIO E POSTURA", 
       immagine: "/equilibrio-e-postura.png",
-      allenamenti: ["Core & Balance", "Stabilità Caviglie", "Riallineamento Posturale", "Placeholder", "Placeholder", "Placeholder"]
+      allenamenti: [
+        "Roll out sulla fitball", 
+        "Catcow con mani sulla fitball", 
+        "Superman con fitball", 
+        "Harmstring curls on fitball", 
+        "Fitball lat stretch", 
+        "Single leg balance reach", 
+        "Physioball toe tap", 
+        "Esercizio equilibrio complesso", 
+        "Wall squats with a ball", 
+        "Stability ball plank to pike", 
+        "Inclinazioni laterali su fitball-seated"
+      ],
+      descrizione: "11 esercizi - 45 minuti di allenamento"
     }
   ];
 
@@ -97,9 +174,9 @@ function HomePage() {
   // --- LOGICA DI ORDINAMENTO DINAMICO ---
   const programmiOrdinati = useMemo(() => {
     // Definiamo la sequenza degli ID in base all'età
-    // Se l'età è maggiore o uguale a 50 -> [4, 5, 3, 2, 1]
-    // Se l'età è inferiore a 50 (o durante il caricamento) -> [1, 2, 3, 5, 4]
-    const ordineIds = eta >= 50 ? [4, 5, 3, 2, 1] : [1, 2, 3, 5, 4];
+    // Se l'età è maggiore o uguale a 60 -> [4, 5, 3, 2, 1]
+    // Se l'età è inferiore a 60 (o durante il caricamento) -> [1, 2, 3, 5, 4]
+    const ordineIds = eta >= 60 ? [4, 5, 3, 2, 1] : [1, 2, 3, 5, 4];
 
     // Ordiniamo l'array originale basandoci sulla posizione dell'ID nell'array 'ordineIds'
     return [...programmi].sort((a, b) => {
@@ -111,26 +188,35 @@ function HomePage() {
     setActiveCardId(prevId => prevId === id ? null : id);
   };
 
-  // --- FUNZIONE PER SALVARE GLI ESERCIZI NEL LOCAL STORAGE ---
-  const handleStartWorkout = (allenamenti, titoloProgramma) => {
+  // --- FUNZIONE PER CARICARE GLI ESERCIZI DA SUPABASE E AVVIARE L'ALLENAMENTO ---
+  const handleStartWorkout = async (allenamenti, programId) => {
+    if (loadingProgramId !== null) return;
+    setLoadingProgramId(programId);
     try {
-      // Salviamo l'array degli esercizi trasformandolo in stringa
-      localStorage.setItem('allenamentiSelezionati', JSON.stringify(allenamenti));
-      
-      // Opzionale: puoi salvare anche il titolo del programma se ti serve nella pagina successiva
-      localStorage.setItem('programmaAttivo', titoloProgramma);
-      
-      console.log(`Allenamento "${titoloProgramma}" avviato e salvato nel localStorage!`);
+      const { data, error } = await supabase
+        .from('esercizi')
+        .select('*')
+        .in('nome', allenamenti);
 
+      if (error) throw error;
+
+      // Rispetta l'ordine originale del programma
+      const ordered = allenamenti
+        .map(nome => data.find(e => e.nome === nome))
+        .filter(Boolean);
+
+      localStorage.setItem('selectedExercises', JSON.stringify(ordered));
       navigate('/allenamento');
     } catch (error) {
-      console.error("Errore nel salvataggio in localStorage:", error);
+      console.error("Errore nel caricamento degli esercizi:", error);
+    } finally {
+      setLoadingProgramId(null);
     }
   };
 
   return (
-    <div className="home-container" style={{ backgroundColor, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23CCCCCC' fill-opacity='0.1'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}>
-      
+    <div className="home-container" style={{ backgroundColor }}>
+      <TutorialOverlay steps={TUTORIAL_HOME} storageKey="tutorial_visto_home" />
       <div className="panels-grid">
         {programmiOrdinati.map((prog) => {
           const isOpen = activeCardId === prog.id;
@@ -146,41 +232,33 @@ function HomePage() {
                 <div className="panel-content">
                   <span className="panel-tag">WORKOUT</span>
                   <h2 className="panel-title">{prog.titolo}</h2>
-                </div>
-              </div>
-
-              {/* Il Cassetto con lista esercizi */}
-              <div className="panel-drawer">
-                <div className="drawer-list">
-                  <ul className="workout-list">
-                    {prog.allenamenti.map((allenamento, index) => (
-                      <li key={index} className="workout-item">
-                        {allenamento}
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="panel-tag">{prog.descrizione}</span>
                 </div>
               </div>
 
               {/* Bottone in fondo full-width */}
               <div className="bttn-container">
-              <button 
-                className={`panel-button ${isOpen ? 'active' : ''}`}
-                onClick={() => toggleDrawer(prog.id)}
-              >
-                {isOpen ? 'Chiudi' : 'View'}
-              </button>
-              <button 
+                <button
                   className="panel-button"
-                  onClick={() => handleStartWorkout(prog.allenamenti, prog.titolo)}
+                  onClick={() => handleStartWorkout(prog.allenamenti, prog.id)}
+                  disabled={loadingProgramId !== null}
                 >
-                  Start
+                  {loadingProgramId === prog.id ? '...' : 'Start'}
                 </button>
               </div>
             </div>
           );
         })}
       </div>
+
+      <button
+        className="home-fab"
+        style={{ backgroundColor: `color-mix(in srgb, ${backgroundColor}, #000000 28%)` }}
+        onClick={() => navigate('/visualizza-esercizi')}
+      >
+        Crea piano personalizzato
+        <span className="home-fab-plus">+</span>
+      </button>
     </div>
   );
 }
