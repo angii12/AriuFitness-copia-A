@@ -1,0 +1,157 @@
+{
+  "target_exercise": "ex6",
+  "window_level": {
+    "accuracy": 0.9583333333333334,
+    "precision": 0.9230769230769231,
+    "recall": 1.0,
+    "specificity": 0.9166666666666666,
+    "f1": 0.9600000000000001,
+    "tp": 132,
+    "tn": 121,
+    "fp": 11,
+    "fn": 0,
+    "threshold": 0.5,
+    "samples": 264,
+    "positive_samples": 132,
+    "negative_samples": 132,
+    "mean_positive_probability": 0.9998900890350342,
+    "mean_negative_probability": 0.07954085618257523
+  },
+  "rep_level": {
+    "accuracy": 0.9583333333333334,
+    "precision": 0.9230769230769231,
+    "recall": 1.0,
+    "specificity": 0.9166666666666666,
+    "f1": 0.9600000000000001,
+    "tp": 12,
+    "tn": 11,
+    "fp": 1,
+    "fn": 0,
+    "threshold": 0.5,
+    "reps": 24
+  },
+  "per_source_window_level": {
+    "ex1": {
+      "accuracy": 0.6666666666666666,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 0.6666666666666666,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 22,
+      "fp": 11,
+      "fn": 0,
+      "samples": 33
+    },
+    "ex2": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 33,
+      "fp": 0,
+      "fn": 0,
+      "samples": 33
+    },
+    "ex4": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 33,
+      "fp": 0,
+      "fn": 0,
+      "samples": 33
+    },
+    "ex5": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 33,
+      "fp": 0,
+      "fn": 0,
+      "samples": 33
+    },
+    "ex6": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "specificity": 0.0,
+      "f1": 1.0,
+      "tp": 132,
+      "tn": 0,
+      "fp": 0,
+      "fn": 0,
+      "samples": 132
+    }
+  },
+  "per_source_rep_level": {
+    "ex1": {
+      "accuracy": 0.6666666666666666,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 0.6666666666666666,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 2,
+      "fp": 1,
+      "fn": 0,
+      "reps": 3
+    },
+    "ex2": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 3,
+      "fp": 0,
+      "fn": 0,
+      "reps": 3
+    },
+    "ex4": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 3,
+      "fp": 0,
+      "fn": 0,
+      "reps": 3
+    },
+    "ex5": {
+      "accuracy": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "specificity": 1.0,
+      "f1": 0.0,
+      "tp": 0,
+      "tn": 3,
+      "fp": 0,
+      "fn": 0,
+      "reps": 3
+    },
+    "ex6": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "specificity": 0.0,
+      "f1": 1.0,
+      "tp": 12,
+      "tn": 0,
+      "fp": 0,
+      "fn": 0,
+      "reps": 12
+    }
+  }
+}

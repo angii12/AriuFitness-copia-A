@@ -1,0 +1,23 @@
+{
+  "original_samples": 143,
+  "augmentation_variants_per_sample": 3,
+  "rotation_degrees": [
+    -10,
+    10
+  ],
+  "mirror_enabled": false,
+  "augmented_samples": 429,
+  "keypoints_shape": [
+    429,
+    8,
+    36
+  ],
+  "angles_shape": [
+    429,
+    8,
+    8
+  ],
+  "labels_shape": [
+    429
+  ]
+}

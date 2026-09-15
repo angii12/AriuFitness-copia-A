@@ -8,5 +8,6 @@ src/webapp/ssl/
 *.pt
 *.h5
 *.ckpt
-*.md
+.env.service
+scratch/
 

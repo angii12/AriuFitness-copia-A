@@ -22,34 +22,9 @@ export const ColorProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const fetchUserColor = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { data: profile, error } = await supabase
-            .from('profili')
-            .select('colore_ariu')
-            .eq('id', user.id)
-            .single();
-
-          if (error) {
-            console.error('Errore nel fetch del colore:', error);
-            return;
-          }
-
-          if (profile && profile.colore_ariu) {
-            const colore = coloriDisponibili[profile.colore_ariu] || coloriDisponibili.beige;
-            setBackgroundColor(colore);
-            document.documentElement.style.setProperty('--page-bg-color', colore);
-          }
-        }
-      } catch (err) {
-        console.error('Errore:', err);
-      }
-    };
-
-    fetchUserColor();
+    // Usa il colore tema predefinito PhysioVision #5B120F
+    setBackgroundColor('#5B120F');
+    document.documentElement.style.setProperty('--page-bg-color', '#ffffff');
   }, []);
 
   const updateColor = (coloreAriu) => {

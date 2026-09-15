@@ -1,0 +1,24 @@
+{
+  "accepted_reps": 8,
+  "generated_windows": 88,
+  "source_video": "C:\\Users\\Utente\\Desktop\\AriuFitness-copia-A\\uploads\\videos\\ex_alzata_gamba\\PM_111-Camera17-30fps.mp4",
+  "source_video_id": "PM_111-Camera17-30fps",
+  "subject_id": "PM_111",
+  "keypoints_shape": [
+    88,
+    8,
+    36
+  ],
+  "angles_shape": [
+    88,
+    8,
+    8
+  ],
+  "labels_shape": [
+    88
+  ],
+  "exercise_label": 1,
+  "temporal_shift_policy": "-5..+5 frames when in video bounds",
+  "window_size": 8,
+  "split_group": "rep_uid"
+}

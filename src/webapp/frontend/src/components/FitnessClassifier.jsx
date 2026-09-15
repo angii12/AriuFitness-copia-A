@@ -2,21 +2,95 @@ import React, { useEffect, useRef, useState } from 'react';
 import { usePrediction } from '../context/PredictionContext';
 import './FitnessClassifier.css';
 
-const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinished, tutorialUrl, tutorialMode = 'sovrapposizione', reps, targetReps, ttsEnabled = true, gateActive = false }) => {
+const SKELETON_CONNECTIONS = [
+  // Torso e Spalle
+  [11, 12], [11, 23], [12, 24], [23, 24],
+  // Braccio sinistro
+  [11, 13], [13, 15],
+  // Braccio destro
+  [12, 14], [14, 16],
+  // Gamba sinistra
+  [23, 25], [25, 27],
+  // Gamba destra
+  [24, 26], [26, 28],
+];
+
+const KEY_JOINTS = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+
+const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCountingActive, isExerciseFinished, tutorialUrl, tutorialMode = 'sovrapposizione', reps, targetReps, ttsEnabled = true, gateActive = false }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const skeletonCanvasRef = useRef(null);
   const wsRef = useRef(null);
   const intervalRef = useRef(null);
   const tutorialOverlayRef = useRef(null);
   const streamRef = useRef(null); // stream attivo, usato per stoppare i track senza dipendere dal DOM
+  const firstFrameSentRef = useRef(false);
+  const hasCompletedRef = useRef(false);
 
   const { prediction, setPrediction } = usePrediction();
 
   const [serverStatus, setServerStatus] = useState({ text: 'Disconnesso', color: '#dc3545' });
 
+  // Rendering dello skeleton leggero su overlay canvas
+  useEffect(() => {
+    const canvas = skeletonCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (!prediction.landmarks || prediction.landmarks.length < 29 || isExerciseFinished) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
+    if (videoRef.current && videoRef.current.videoWidth > 0) {
+      if (canvas.width !== videoRef.current.videoWidth || canvas.height !== videoRef.current.videoHeight) {
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+      }
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const landmarks = prediction.landmarks;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Linee skeleton leggere (verde menta discreto)
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(77, 124, 95, 0.85)';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    SKELETON_CONNECTIONS.forEach(([i, j]) => {
+      const p1 = landmarks[i];
+      const p2 = landmarks[j];
+      if (p1 && p2 && (p1.visibility ?? 1.0) > 0.35 && (p2.visibility ?? 1.0) > 0.35) {
+        ctx.beginPath();
+        ctx.moveTo(p1.x * w, p1.y * h);
+        ctx.lineTo(p2.x * w, p2.y * h);
+        ctx.stroke();
+      }
+    });
+
+    // Punti articolari principali
+    KEY_JOINTS.forEach((i) => {
+      const p = landmarks[i];
+      if (p && (p.visibility ?? 1.0) > 0.35) {
+        ctx.beginPath();
+        ctx.arc(p.x * w, p.y * h, 4.5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#28a745';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      }
+    });
+  }, [prediction.landmarks, isExerciseFinished]);
+
   useEffect(() => {
     console.log('Esercizio selezionato:', selectedExercise, 'gateActive:', gateActive);
-    if (!selectedExercise || gateActive) {
+    if ((!selectedExercise && !assignmentId) || gateActive) {
       setServerStatus({
         text: gateActive ? 'Ruota il telefono in orizzontale' : 'Seleziona un esercizio per iniziare',
         color: '#ffc107',
@@ -24,31 +98,68 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
       return;
     }
 
+    // Reset flag completamento per nuova sessione
+    hasCompletedRef.current = false;
+
     // La webcam parte subito, indipendentemente dal WebSocket
     startWebcam();
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = `${window.location.hostname}:8000`;
-    wsRef.current = new WebSocket(`${wsProtocol}//${wsHost}/ws/stream`);
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    let wsUrl;
+    if (isLocal) {
+      wsUrl = `ws://${window.location.hostname}:8000/ws/stream`;
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}/ws/stream`;
+    }
+    console.log('[WS] URL WebSocket finale:', wsUrl);
+
+    wsRef.current = new WebSocket(wsUrl);
 
     wsRef.current.onopen = () => {
+      console.log('[WS] onopen: connessione stabilita');
       setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
-      const exerciseKey = selectedExercise?.nome
-        ?.toLowerCase()
-        .replace(/ /g, '_');
-      wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey, llm_enabled: ttsEnabled }));
+
+      if (assignmentId && sessionToken) {
+        wsRef.current.send(JSON.stringify({ assignment_id: assignmentId, token: sessionToken, llm_enabled: ttsEnabled }));
+      } else {
+        const exerciseKey = selectedExercise?.nome
+          ?.toLowerCase()
+          .replace(/ /g, '_') || selectedExercise;
+        wsRef.current.send(JSON.stringify({ selected_exercise: exerciseKey, llm_enabled: ttsEnabled }));
+      }
     };
 
     wsRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setPrediction(data);
+      if (hasCompletedRef.current) return;
+      try {
+        const data = JSON.parse(event.data);
+        if (targetReps && targetReps > 0 && data.reps >= targetReps) {
+          hasCompletedRef.current = true;
+          setPrediction({
+            ...data,
+            reps: targetReps,
+            phrase: "Hai completato tutte le ripetizioni previste. Ottimo lavoro."
+          });
+          stopStreaming();
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.close(1000, 'Exercise finished');
+          }
+          return;
+        }
+        setPrediction(data);
+      } catch (err) {
+        console.error('[WS] Errore parsing messaggio:', err);
+      }
     };
 
-    wsRef.current.onclose = () => {
+    wsRef.current.onclose = (event) => {
+      console.log('[WS] onclose: code=', event.code, 'reason=', event.reason);
       setServerStatus({ text: 'Disconnesso ❌', color: '#dc3545' });
     };
 
-    wsRef.current.onerror = () => {
+    wsRef.current.onerror = (err) => {
+      console.error('[WS] onerror:', err);
       setServerStatus({ text: 'Errore Connessione Back-end ⚠️', color: '#ffc107' });
     };
 
@@ -73,7 +184,7 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
   useEffect(() => {
     if (!tutorialOverlayRef.current) return;
     if (isCountingActive && tutorialUrl) {
-      tutorialOverlayRef.current.play().catch(() => {});
+      tutorialOverlayRef.current.play().catch(() => { });
     } else {
       tutorialOverlayRef.current.pause();
       tutorialOverlayRef.current.currentTime = 0;
@@ -82,18 +193,18 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
 
   useEffect(() => {
     if (isExerciseFinished) {
+      hasCompletedRef.current = true;
       stopStreaming();
-      setServerStatus({ text: 'Esercizio Completato', color: '#28a745' });
-      
-      if (typeof setPrediction === 'function') {
-        setPrediction({ status: 'Inattivo', reps: 0, confidence: 0 });
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close(1000, 'Exercise finished');
       }
+      setServerStatus({ text: 'Esercizio Completato', color: '#28a745' });
     } else {
       // Se la websocket è ancora aperta, riportiamo il server status in modalità attiva
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
       }
-    }  
+    }
   }, [isExerciseFinished]);
 
   const stopStreaming = () => {
@@ -145,6 +256,7 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
 
   const startStreaming = () => {
     intervalRef.current = setInterval(() => {
+      if (hasCompletedRef.current || isExerciseFinished) return;
       if (!videoRef.current || !canvasRef.current || !wsRef.current) return;
       if (wsRef.current.readyState !== WebSocket.OPEN) return;
 
@@ -154,6 +266,11 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+
+      if (!firstFrameSentRef.current) {
+        console.log('[WS] Primo frame inviato con successo al backend');
+        firstFrameSentRef.current = true;
+      }
 
       wsRef.current.send(JSON.stringify({ image: dataUrl }));
     }, 130);
@@ -191,100 +308,113 @@ const FitnessClassifier = ({ selectedExercise, isCountingActive, isExerciseFinis
 
   return (
     <>
-    <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden',}}>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}>
 
-      {/* Box Webcam con overlay */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{
-          position: 'absolute', top: 0, left: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover',
-          transform: 'scaleX(-1)',
-        }}
-      />
-      <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-
-      {/* Overlay Video Tutorial - solo in modalità sovrapposizione */}
-      {tutorialUrl && tutorialMode === 'sovrapposizione' && (
+        {/* Box Webcam con overlay */}
         <video
-          ref={tutorialOverlayRef}
-          key={tutorialUrl}
-          src={tutorialUrl}
-          loop
-          muted
+          ref={videoRef}
+          autoPlay
           playsInline
-          className={`tutorial-overlay-video${isCountingActive ? ' tutorial-overlay-video--active' : ''}`}
+          muted
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            transform: 'scaleX(-1)',
+          }}
         />
-      )}
+        {/* Canvas Overlay per Skeleton Leggero in Tempo Reale */}
+        <canvas
+          ref={skeletonCanvasRef}
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            transform: 'scaleX(-1)',
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        />
+        <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
 
-      {/* Overlay Header in alto - nome esercizio e reps */}
-      {selectedExercise && isCountingActive && (
-        <div className="exercise-header-overlay">
-          <span className="exercise-header-name">
-            {selectedExercise.nome?.toUpperCase()}
-          </span>
-          <span className="exercise-header-reps">
-            {reps} / {targetReps}
-          </span>
-        </div>
-      )}
+        {/* Overlay Video Tutorial - solo in modalità sovrapposizione */}
+        {tutorialUrl && tutorialMode === 'sovrapposizione' && (
+          <video
+            ref={tutorialOverlayRef}
+            key={tutorialUrl}
+            src={tutorialUrl}
+            loop
+            muted
+            playsInline
+            className={`tutorial-overlay-video${isCountingActive ? ' tutorial-overlay-video--active' : ''}`}
+          />
+        )}
 
-      {/* Confidence in basso a sinistra - solo durante l'esercizio e solo se corretto */}
-      {isCountingActive && (
-        <div className="confidence-badge-overlay">
-          <span style={{ color: getConfidenceColor(displayConfidence) }}>
-            {displayConfidence}%
-          </span>
-        </div>
-      )}
+        {/* Overlay Header in alto - nome esercizio e reps */}
+        {selectedExercise && isCountingActive && (
+          <div className="exercise-header-overlay">
+            <span className="exercise-header-name">
+              {selectedExercise.nome?.toUpperCase()}
+            </span>
+            <span className="exercise-header-reps">
+              {reps} / {targetReps}
+            </span>
+          </div>
+        )}
 
-      {/* Placeholder: nessun esercizio ancora selezionato */}
-      {!selectedExercise && (
-        <>
+        {/* Confidence in basso a sinistra - solo durante l'esercizio e solo se corretto */}
+        {isCountingActive && (
+          <div className="confidence-badge-overlay">
+            <span style={{ color: getConfidenceColor(displayConfidence) }}>
+              {displayConfidence}%
+            </span>
+          </div>
+        )}
+
+        {/* Placeholder: nessun esercizio ancora selezionato */}
+        {!selectedExercise && (
+          <>
+            <div className="top-status-overlay">
+              <div className="positioning-message">
+                Scorri in basso e seleziona un esercizio
+              </div>
+            </div>
+            <div className="no-exercise-placeholder">
+              <img src="/icons8-fotocamera-50.png" alt="" />
+              <p className="no-exercise-hint">La videocamera si attiverà appena avrai selezionato l'esercizio</p>
+            </div>
+          </>
+        )}
+
+        {/* Messaggio di posizionamento + barra buffer - overlay assoluto in alto */}
+        {!isCountingActive && selectedExercise && prediction.exercise && (
           <div className="top-status-overlay">
-            <div className="positioning-message">
-              Scorri in basso e seleziona un esercizio
+            <div className={`positioning-message${prediction.status === 'no_model' ? ' positioning-message--no-model' : ''}`}>
+              {formatExerciseName(prediction.exercise)}
             </div>
+            {prediction.status === 'buffering' && (
+              <div className="buffer-progress-wrapper">
+                <div
+                  className="buffer-progress-bar"
+                  style={{
+                    width: `${Math.min(
+                      ((prediction.frames_stacked || 0) / (prediction.max_frames || 43)) * 100,
+                      100
+                    )}%`,
+                  }}
+                />
+              </div>
+            )}
           </div>
-          <div className="no-exercise-placeholder">
-            <img src="/icons8-fotocamera-50.png" alt="" />
-            <p className="no-exercise-hint">La videocamera si attiverà appena avrai selezionato l'esercizio</p>
-          </div>
-        </>
-      )}
-
-      {/* Messaggio di posizionamento + barra buffer - overlay assoluto in alto */}
-      {!isCountingActive && selectedExercise && prediction.exercise && (
-        <div className="top-status-overlay">
-          <div className={`positioning-message${prediction.status === 'no_model' ? ' positioning-message--no-model' : ''}`}>
-            {formatExerciseName(prediction.exercise)}
-          </div>
-          {prediction.status === 'buffering' && (
-            <div className="buffer-progress-wrapper">
-              <div
-                className="buffer-progress-bar"
-                style={{
-                  width: `${Math.min(
-                    ((prediction.frames_stacked || 0) / (prediction.max_frames || 43)) * 100,
-                    100
-                  )}%`,
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 };

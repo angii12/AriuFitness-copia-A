@@ -1,0 +1,209 @@
+/* ── DoctorHomePage.css ── */
+
+.pv-doctor-dashboard {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  color: #222b27;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.pv-doctor-header {
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.pv-doctor-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  color: #4d7c5f;
+  margin: 0 0 12px 0;
+}
+
+.pv-doctor-subtitle {
+  font-size: 1.15rem;
+  color: #4a5a52;
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+/* Griglia per le card */
+.pv-doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+/* Stile Card */
+.pv-doctor-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  border: 1px solid #7aab8a; /* --pv-sage */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.pv-doctor-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(77, 124, 95, 0.12);
+  border-color: #4d7c5f; /* --pv-sage-dark */
+}
+
+/* Elementi decorativi di sfondo (blobs) */
+.pv-doctor-card::before,
+.pv-doctor-card::after {
+  content: '';
+  position: absolute;
+  filter: blur(40px);
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0.6;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.pv-doctor-card:hover::before {
+  transform: scale(1.1) translate(10px, -10px);
+  opacity: 0.8;
+}
+
+.pv-doctor-card:hover::after {
+  transform: scale(1.1) translate(-10px, 10px);
+  opacity: 0.8;
+}
+
+/* I Miei Pazienti - verde salvia */
+.pv-card-patients::before {
+  width: 150px;
+  height: 150px;
+  background: rgba(122, 171, 138, 0.3); /* verde salvia */
+  top: -20px;
+  right: -20px;
+}
+.pv-card-patients::after {
+  width: 120px;
+  height: 120px;
+  background: rgba(216, 237, 224, 0.5); /* salvia chiaro */
+  bottom: -10px;
+  left: -20px;
+}
+
+/* Crea Esercizio - azzurro polvere + verde salvia */
+.pv-card-exercise::before {
+  width: 160px;
+  height: 160px;
+  background: rgba(176, 203, 221, 0.35); /* azzurro polvere */
+  bottom: -30px;
+  right: -20px;
+}
+.pv-card-exercise::after {
+  width: 140px;
+  height: 140px;
+  background: rgba(122, 171, 138, 0.25); /* verde salvia */
+  top: -10px;
+  left: -10px;
+}
+
+/* Elenco Esercizi - verde salvia più chiaro */
+.pv-card-library::before {
+  width: 180px;
+  height: 180px;
+  background: rgba(216, 237, 224, 0.6); /* salvia chiaro */
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.pv-card-library::after {
+  width: 130px;
+  height: 130px;
+  background: rgba(122, 171, 138, 0.2);
+  bottom: -20px;
+  right: -10px;
+}
+
+/* Profilo - grigio-verde molto tenue */
+.pv-card-profile::before {
+  width: 140px;
+  height: 140px;
+  background: rgba(238, 245, 240, 0.8);
+  top: -10px;
+  right: -10px;
+}
+.pv-card-profile::after {
+  width: 160px;
+  height: 160px;
+  background: rgba(189, 206, 195, 0.25); /* grigio-verde tenue */
+  bottom: -20px;
+  left: -30px;
+}
+
+/* Icona */
+.pv-card-icon {
+  width: 72px;
+  height: 72px;
+  background: #eef5f0;
+  color: #4d7c5f; /* --pv-sage-dark */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  transition: transform 0.3s ease, background 0.3s ease, color 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.pv-doctor-card:hover .pv-card-icon {
+  background: #4d7c5f;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.pv-card-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* Testi Card */
+.pv-doctor-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #4d7c5f;
+  margin: 0 0 12px 0;
+  z-index: 2;
+  position: relative;
+}
+
+.pv-doctor-card p {
+  font-size: 1.05rem;
+  color: #4a5a52;
+  line-height: 1.5;
+  margin: 0;
+  z-index: 2;
+  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .pv-doctor-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .pv-doctor-grid {
+    grid-template-columns: 1fr;
+  }
+}

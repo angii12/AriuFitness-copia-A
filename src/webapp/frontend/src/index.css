@@ -2,87 +2,177 @@
 
 :root {
   width: 100%;
-  --primary-color: #FFFFFF; 
+
+  --primary-color: #ffffff;
   --secondary-color: #5B120F;
+
   --text-color: #2d2d2d;
   --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
+
   --page-bg-color: #ffffff;
+}
+
+
+/* ======================================================
+   PHYSIOVISION DOCTOR & PATIENT BACKGROUND
+   ====================================================== */
+.pv-doctor-page-bg,
+.pv-patient-page-bg {
+  background: linear-gradient(135deg, #e9f4ec 0%, #deeee3 100%);
+  min-height: 100vh;
+  width: 100%;
+  margin-top: -56px;
+  padding-top: 56px;
+}
+
+
+/* ======================================================
+   BASE
+   ====================================================== */
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+
+  width: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
-  place-items: center;
+
   min-height: 100vh;
+
   font-family: 'Poppins', sans-serif;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   background: var(--page-bg-color);
-  color: #2d2d2d;
+
+  color: var(--text-color);
 }
+
+
+/* ======================================================
+   TITOLI
+   ====================================================== */
 
 h1 {
   font-size: clamp(1.8rem, 5vw, 3.2rem);
   line-height: 1.1;
 }
 
+
+/* ======================================================
+   BOTTONI GLOBALI LEGACY
+   ====================================================== */
+
 button {
   border-radius: 8px;
+
   border: 1px solid transparent;
-  padding: clamp(0.5em, 2vw, 0.6em) clamp(1em, 3vw, 1.2em);
+
+  padding:
+    clamp(0.5em, 2vw, 0.6em) clamp(1em, 3vw, 1.2em);
+
   font-size: clamp(0.9rem, 2vw, 1rem);
+
   font-weight: 500;
+
   font-family: inherit;
+
   background-color: #5B120F;
+
   color: #ffffff;
+
   cursor: pointer;
+
   transition: all 0.25s;
 }
+
 button:hover {
   background-color: #5b120f46;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+
+/* ======================================================
+   LIGHT MODE
+   ====================================================== */
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #2d2d2d;
+
     background-color: #f5e6d3;
   }
-  /*a:hover {
-    color: #d57a18;
-  }*/
+
   button {
     background-color: #5B120F;
+
     color: #ffffff;
   }
 }
 
+
+/* ======================================================
+   CARD LEGACY
+   ====================================================== */
+
 .glass-card {
   background: #ffffff;
+
   border-radius: 20px;
+
   border: 1px solid #ffffff;
+
   padding: clamp(20px, 5vw, 40px);
+
   color: #2d2d2d;
 }
 
+
+/* ======================================================
+   HEADER PRIVATO
+   ====================================================== */
+
 .global-header {
   position: fixed;
+
   top: 0;
   left: 0;
   right: 0;
-  padding: clamp(12px, 3vw, 15px) clamp(15px, 5vw, 30px);
-  background: #ffffff2d;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  padding:
+    clamp(12px, 3vw, 15px) clamp(15px, 5vw, 30px);
+
+  background: #ffffff;
+
+  border-bottom: 1px solid rgba(122, 171, 138, 0.15);
+  box-shadow: none;
+
   display: flex;
+
   justify-content: space-between;
   align-items: center;
+
   z-index: 100;
+
   box-sizing: border-box;
+
   flex-wrap: wrap;
+
   transition: transform 0.3s ease;
 }
 
@@ -90,74 +180,132 @@ button:focus-visible {
   transform: translateY(-110%);
 }
 
+
+/* ======================================================
+   BRAND HEADER
+   ====================================================== */
+
 .brand-section {
   display: flex;
+
   align-items: center;
-  gap: 2px; /* Spazio tra logo e testo */
+
+  gap: 2px;
 }
 
-/* --- Il TITOLO "FitnessAI " --- */
 .app-title-global {
   font-family: 'Poppins', sans-serif;
   font-size: clamp(1.5rem, 4vw, 2.2rem);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: #5B120F;
-  text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+  color: #1f2824;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
 }
-.second{
-  color: #7a7968;
+
+.second {
+  color: #4d7c5f;
 }
+
+
+/* ======================================================
+   VECCHIO WELCOME TITLE
+   ====================================================== */
 
 .welcome-title {
   font-family: 'Poppins', sans-serif;
-  font-size: clamp(2rem, 8vw, 5rem);
-  font-weight: 700;
-  color: #5B120F;
-  text-align: center;
-  width: 100%;
-  
-  /* Ombra per eleganza */
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  /* Leggera animazione all'apparizione */
+  font-size: clamp(2rem, 8vw, 5rem);
+
+  font-weight: 700;
+
+  color: #5B120F;
+
+  text-align: center;
+
+  width: 100%;
+
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1);
+
   animation: fadeInDown 1s ease-out;
-  
-  /* Spazio sotto il titolo */
-  margin-bottom: clamp(15px, 5vw, 30px); 
+
+  margin-bottom: clamp(15px, 5vw, 30px);
 }
 
-/* Animazione per il titolo */
 @keyframes fadeInDown {
   from {
     opacity: 0;
+
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
+
     transform: translateY(0);
   }
 }
 
-#root, .page-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+
+/* ======================================================
+   ROOT E CONTENUTO
+   ====================================================== */
+
+#root {
   width: 100%;
+
+  min-height: 100vh;
+
+  display: flex;
+
+  flex-direction: column;
 }
 
 .page-content {
+  width: 100%;
+
+  min-height: 100vh;
+
+  display: flex;
+
+  flex-direction: column;
+
+  box-sizing: border-box;
+}
+
+
+/*
+  PAGINE PRIVATE:
+  lasciamo lo spazio necessario per il GlobalHeader.
+*/
+.page-content--private {
   padding-top: 56px;
 }
 
+
 /*
-  Assicura che il contenitore della Galleria Esercizi
-  usi lo spazio disponibile per centrare il suo contenuto.
+  PAGINE PUBBLICHE:
+  NESSUNO spazio sopra.
+
+  La foto della landing parte esattamente
+  dal bordo superiore della finestra.
 */
+.page-content--public {
+  padding-top: 0;
+}
+
+
+/* ======================================================
+   CONTAINER LEGACY
+   ====================================================== */
+
 .page-container {
-  flex-grow: 1; /* Aggiungi questa riga */
+  flex-grow: 1;
+
   display: flex;
+
   justify-content: center;
+
   align-items: center;
 }

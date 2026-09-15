@@ -1,0 +1,4 @@
+rep_uid,test_source,true_label,predicted_label,probability_ex6,correct
+PM_000-Camera17-30fps__rep_001,ex1,0,1,0.5976712703704834,False
+PM_118-Camera17-30fps__rep_002,ex6,1,0,0.00018370075849816203,False
+PM_118-Camera17-30fps__rep_001,ex6,1,0,1.155887821369106e-05,False

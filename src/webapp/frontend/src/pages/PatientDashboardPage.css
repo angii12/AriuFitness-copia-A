@@ -1,0 +1,424 @@
+/* ══════════════════════════════════════════════════════════════
+   PatientDashboardPage.css — PhysioVision Design System
+   ══════════════════════════════════════════════════════════════ */
+
+.pv-patient-dash-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 40px 24px 80px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1f2824;
+}
+
+.pv-patient-dash-content {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+/* ── Header Pagina ──────────────────────────────────────────── */
+.pv-patient-dash-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.pv-patient-dash-header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-weight: 700;
+  color: #4d7c5f;
+  margin: 0 0 10px;
+}
+
+.pv-patient-dash-header p {
+  color: #5f6f67;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/* ── Loading / Error ────────────────────────────────────────── */
+.pv-patient-dash-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #5f6f67;
+  font-size: 1.1rem;
+}
+
+.pv-patient-dash-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 16px 20px;
+  border-radius: 14px;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+/* ── Empty State ────────────────────────────────────────────── */
+.pv-patient-dash-empty-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(122, 171, 138, 0.22);
+  border-radius: 24px;
+  padding: 56px 28px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(77, 124, 95, 0.06);
+}
+
+.pv-patient-dash-empty-icon {
+  font-size: 3.2rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.pv-patient-dash-empty-card h3 {
+  color: #4d7c5f;
+  font-size: 1.3rem;
+  margin: 0 0 8px;
+}
+
+.pv-patient-dash-empty-card p {
+  color: #5f6f67;
+  font-size: 0.95rem;
+  max-width: 460px;
+  margin: 0 auto 24px;
+  line-height: 1.5;
+}
+
+.pv-btn-connect-doctor {
+  display: inline-block;
+  background: #4d7c5f;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 12px 28px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(77, 124, 95, 0.2);
+  transition: background 0.15s, transform 0.15s;
+}
+
+.pv-btn-connect-doctor:hover {
+  background: #3d6850;
+  transform: translateY(-2px);
+}
+
+/* ── Card Medico ────────────────────────────────────────────── */
+.pv-doctor-group-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(122, 171, 138, 0.22);
+  border-radius: 24px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 24px rgba(77, 124, 95, 0.06);
+}
+
+.pv-doctor-group-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid #eef5f0;
+  margin-bottom: 24px;
+}
+
+.pv-doctor-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #d8ede0;
+  color: #4d7c5f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.pv-doctor-info-text {
+  flex: 1;
+}
+
+.pv-doctor-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2824;
+  margin: 0 0 2px;
+}
+
+.pv-doctor-role-tag {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4d7c5f;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.pv-doctor-count-badge {
+  background: #eef5f0;
+  color: #4d7c5f;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* ── Sezioni Da Fare / Completati ───────────────────────────── */
+.pv-exercises-section {
+  margin-bottom: 28px;
+}
+
+.pv-exercises-section:last-child {
+  margin-bottom: 0;
+}
+
+.pv-exercises-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pv-exercises-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+}
+
+.pv-exercises-section-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #eef5f0;
+  color: #4d7c5f;
+}
+
+.pv-exercises-section-empty {
+  background: #fbfdfc;
+  border: 1.5px dashed #d8ede0;
+  border-radius: 16px;
+  padding: 22px 20px;
+  text-align: center;
+  color: #5f6f67;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+/* ── Lista Esercizi sotto il Medico ─────────────────────────── */
+.pv-doctor-exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pv-patient-exercise-item {
+  background: #fbfdfc;
+  border: 1.5px solid #d8ede0;
+  border-radius: 18px;
+  padding: 22px 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pv-patient-exercise-item:hover {
+  border-color: #7aab8a;
+  box-shadow: 0 4px 14px rgba(77, 124, 95, 0.08);
+}
+
+.pv-pex-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pv-pex-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.pv-pex-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #d8ede0;
+  color: #4d7c5f;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pv-pex-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2824;
+}
+
+.pv-pex-desc {
+  color: #5f6f67;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0 0 10px 40px;
+}
+
+.pv-pex-notes {
+  background: #f7faf8;
+  border-left: 3.5px solid #7aab8a;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 14px;
+  margin: 0 0 10px 40px;
+}
+
+.pv-pex-notes-lbl {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #4d7c5f;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+
+.pv-pex-notes-text {
+  font-size: 0.88rem;
+  color: #3d4a44;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.pv-pex-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.pv-pex-status-badge--todo {
+  background: #fff8e1;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.pv-pex-status-badge--completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.pv-pex-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #8fa99c;
+  margin-left: 40px;
+}
+
+.pv-pex-completed-date {
+  color: #2e7d32;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Blocco Destro: Reps & Pulsante Avvia ────────────────────── */
+.pv-pex-action-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pv-pex-reps-box {
+  background: #eef5f0;
+  border-radius: 14px;
+  padding: 10px 18px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.pv-pex-reps-num {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #4d7c5f;
+  line-height: 1;
+}
+
+.pv-pex-reps-lbl {
+  font-size: 0.7rem;
+  color: #5f6f67;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+.pv-btn-start-session {
+  background: #4d7c5f;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(77, 124, 95, 0.2);
+  transition: background 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.pv-btn-start-session:hover {
+  background: #3d6850;
+  transform: translateY(-2px);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .pv-doctor-group-card {
+    padding: 20px 18px;
+  }
+
+  .pv-patient-exercise-item {
+    flex-direction: column;
+    padding: 16px 18px;
+  }
+
+  .pv-pex-desc,
+  .pv-pex-notes,
+  .pv-pex-meta-row {
+    margin-left: 0;
+  }
+
+  .pv-pex-action-col {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid #eef5f0;
+    padding-top: 14px;
+    margin-top: 8px;
+  }
+}

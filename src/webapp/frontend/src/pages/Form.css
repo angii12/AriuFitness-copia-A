@@ -205,3 +205,64 @@
   background-color: #000000;
   color: #ffffff;
 }
+/* -- PhysioVision Form Override -- palette swap --*/
+.form-page-container {
+  background: linear-gradient(150deg, #f4f7f5 0%, #d8ede0 50%, #e4f0f7 100%) !important;
+}
+.form-card {
+  color: #2c3a35 !important;
+  box-shadow: 0 8px 32px rgba(77, 124, 95, 0.14);
+  border: 1.5px solid rgba(122, 171, 138, 0.25);
+  border-radius: 20px !important;
+}
+.form-card h2 {
+  color: #4d7c5f !important;
+  text-shadow: none !important;
+  font-size: clamp(2.0rem, 6vw, 2.8rem) !important;
+}
+.form-subtitle {
+  color: #6b7d74 !important;
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem) !important;
+}
+.form-card input {
+  border: 2px solid #b8d9c5 !important;
+  color: #2c3a35 !important;
+  font-size: clamp(0.95rem, 2vw, 1.1rem) !important;
+}
+.form-card input:focus {
+  border-color: #7aab8a !important;
+  box-shadow: 0 0 0 3px rgba(122, 171, 138, 0.18) !important;
+}
+.form-card input::placeholder { color: #8fa99c !important; }
+.form-button {
+  background: #4d7c5f !important;
+  box-shadow: 0 3px 12px rgba(77, 124, 95, 0.3);
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem) !important;
+}
+.form-button:hover { background: #3d6850 !important; }
+.switch-form-link { 
+  color: #4d7c5f !important;
+  font-size: 1.05rem !important;
+}
+.switch-form-link:hover { color: #3d6850 !important; }
+.form-gender-dropdown select {
+  border: 2px solid #b8d9c5 !important;
+}
+.form-gender-dropdown select:focus {
+  border-color: #7aab8a !important;
+  box-shadow: 0 0 0 3px rgba(122,171,138,0.18) !important;
+}
+.form-gender-dropdown label {
+  color: #4d7c5f !important;
+  font-size: 1.05rem !important;
+}
+.show-password-button {
+  background: #e4f0f7 !important;
+  color: #4d7c5f !important;
+  font-size: 0.9rem !important;
+  padding: 6px 12px !important;
+}
+.show-password-button:hover {
+  background: #d8ede0 !important;
+}
+.error-message { color: #b44a4a !important; }

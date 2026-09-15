@@ -1,0 +1,50 @@
+{
+  "guide_angle": "left_knee",
+  "direction": "decrease",
+  "selection_mode": "automatic_proposal",
+  "configuration_to_save": true,
+  "score": 0.7870843733269408,
+  "closure_score": null,
+  "period_frames": 113.0,
+  "period_seconds": 3.7666666666666666,
+  "period_role": "diagnostic_only",
+  "segmentation_mode": "strict_full_cycle_v5_stable_canonical_rest",
+  "candidate_angles": [
+    "left_knee",
+    "left_hip",
+    "left_elbow",
+    "right_elbow",
+    "left_shoulder",
+    "right_hip",
+    "right_knee",
+    "right_shoulder"
+  ],
+  "detected_reps": 10,
+  "used_reps": 10,
+  "training_rep_selection": "quality_plus_duration_amplitude_diversity_v1",
+  "max_training_reps": 20,
+  "status": "ok",
+  "expected_reps": null,
+  "expected_reps_role": null,
+  "exercise_id": "ex_alzata_gamba",
+  "video": "C:\\Users\\Utente\\Desktop\\AriuFitness-copia-A\\uploads\\videos\\ex_alzata_gamba\\PM_111-Camera17-30fps.mp4",
+  "fps": 30.0,
+  "total_frames": 3590,
+  "pose_detection_rate": 100.0,
+  "rep_mode": "auto",
+  "signal_selection_mode": "doctor_guided",
+  "doctor_selected_joints": [
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee"
+  ],
+  "doctor_validation_angles": [
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee"
+  ],
+  "doctor_confirmed_reps": 10,
+  "doctor_unconfirmed_reps": 0
+}

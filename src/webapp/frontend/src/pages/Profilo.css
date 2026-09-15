@@ -1,311 +1,270 @@
-/* === PROFILO.CSS ===
-   Styling specifici per la pagina del profilo
-*/
+/* ======================================================
+   PROFILO.CSS — PhysioVision Doctor Profile Styling
+   ====================================================== */
 
-/* --- Profilo: coerente con form-card --- */
-.profile-card {
-    gap: 14px;
-    margin-top: 0;
+:root {
+  --pv-sage: #7aab8a;
+  --pv-sage-dark: #4d7c5f;
+  --pv-sage-light: #d8ede0;
+  --pv-text: #1f2824;
+  --pv-muted: #5f6f67;
+  --pv-bg: #f7faf8;
+  --pv-white: #ffffff;
 }
 
-
-.profile-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 2px solid #5B120F;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  font-size: 32px;
-  font-weight: 800;
-  color: #5B120F;
-  overflow: hidden;
-  margin: 0 auto 6px;
+/* Container pagina profilo */
+.pv-profile-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 56px);
+  padding: 48px 24px;
+  box-sizing: border-box;
 }
 
-.profile-avatar img {
+/* Card centrale profilo proporzionata al desktop */
+.pv-profile-card {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 600px;
+  background: var(--pv-white);
+  border-radius: 18px;
+  border: 1px solid rgba(77, 124, 95, 0.18);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.06);
+  padding: 40px 44px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.profile-label {
-  color: #5B120F;
-  opacity: 1;
-  font-weight: 500;
+/* Header: Titolo e Sottotitolo compatti */
+.pv-profile-header {
+  margin-bottom: 22px;
 }
 
-.profile-value {
+.pv-profile-title {
+  color: #1b382b;
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  letter-spacing: -0.3px;
+}
+
+.pv-profile-subtitle {
+  color: var(--pv-muted);
+  font-size: 1.05rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Badge Ruolo */
+.pv-profile-role-badge-row {
+  margin-bottom: 26px;
+  display: flex;
+  justify-content: center;
+}
+
+.pv-role-badge {
+  background-color: var(--pv-sage-light);
+  color: #1b382b;
+  border: 1px solid var(--pv-sage);
+  border-radius: 9999px;
+  padding: 8px 22px;
   font-weight: 600;
-  color: #2d2d2d;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dettagli profilo */
+.pv-profile-details-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pv-profile-view-block {
+  width: 100%;
+}
+
+/* Griglia dati account con separatori tenui e respiro maggiore */
+.pv-profile-info-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(77, 124, 95, 0.18);
+  border-bottom: 1px solid rgba(77, 124, 95, 0.18);
+  padding: 16px 0;
+  margin-bottom: 28px;
+}
+
+.pv-profile-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 6px;
+  border-bottom: 1px solid rgba(77, 124, 95, 0.08);
+  text-align: left;
+}
+
+.pv-profile-info-row:last-child {
+  border-bottom: none;
+}
+
+.pv-profile-label {
+  color: #2d3e34;
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.pv-profile-value {
+  color: var(--pv-text);
+  font-weight: 500;
+  font-size: 1.02rem;
   word-break: break-word;
 }
 
-/* azioni in basso allineate come nelle altre pagine */
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-  gap: 10px;
+/* Azioni Profilo */
+.pv-profile-actions {
+  width: 100%;
 }
 
-.form-button--secondary {
-  background: transparent;
-  border: 1px solid #5B120F;
-  color: #5B120F;
-}
-
-.form-button--secondary:hover {
-  background: #f8b1af;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-}
-
-.form-button--danger {
-  background: #c1121f;
-  color: #ffffff;
+/* Pulsante principale PhysioVision */
+.pv-btn-primary {
+  background-color: var(--pv-sage-dark);
+  color: var(--pv-white);
   border: none;
+  border-radius: 12px;
+  padding: 14px 26px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(77, 124, 95, 0.22);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.form-button--danger:hover:not(:disabled) {
-  background: #a00d1a;
-  transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.18);
+.pv-btn-primary:hover:not(:disabled) {
+  background-color: #3e634c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(77, 124, 95, 0.28);
 }
 
-.form-button--danger:disabled {
-  opacity: 0.6;
+.pv-btn-primary:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-.profile-input {
+.pv-btn-full {
+  width: 100%;
+}
+
+/* Pulsante secondario / annulla */
+.pv-btn-secondary {
+  background-color: var(--pv-bg);
+  color: #2f3e36;
+  border: 1.5px solid var(--pv-sage);
+  border-radius: 12px;
+  padding: 14px 26px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pv-btn-secondary:hover:not(:disabled) {
+  background-color: #eaf1ed;
+  border-color: var(--pv-sage-dark);
+  color: #1b382b;
+}
+
+.pv-btn-secondary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Form Modifica Profilo */
+.pv-profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  text-align: left;
+}
+
+.pv-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pv-form-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2824;
+}
+
+.pv-form-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 13px 16px;
   border-radius: 10px;
-  border: 3px solid #5B120F;
-  background: #ffffff;
-  color: #2d2d2d;
+  border: 1.5px solid #cfe2d6;
+  background-color: #ffffff;
+  color: var(--pv-text);
   font-size: 1rem;
   outline: none;
   transition: all 0.2s ease;
 }
 
-.profile-input:focus {
-  border-color: #5B120F;
-  box-shadow: 0 0 0 3px rgba(91, 18, 15, 0.1);
+.pv-form-input:focus {
+  border-color: var(--pv-sage-dark);
+  box-shadow: 0 0 0 3px rgba(77, 124, 95, 0.15);
 }
 
-.profile-card h2,
-.profile-card .form-subtitle {
-  color: #5B120F;
+.pv-form-input::placeholder {
+  color: #9db2a6;
 }
 
-/* centra la card in pagina */
-.profile-center {
-    min-height: 40dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    overflow: visible;
-}
-
-/* riquadro interno, eredita font/colore dalla glass card */
-.classcard {
-  font: inherit;
-  color: inherit;
-  border-radius: 14px;
-  background: #ffffff;
-  margin-top: 12px;
-}
-
-/* griglia info + layout righe */
-.profile-info-grid { 
-  width: 100%;
-  display: grid;
-  gap: 12px;
-  padding: 14px 0;
-  border-top: 1px solid #5B120F;
-  border-bottom: 1px solid #5B120F;
-}
-
-.profile-row {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 12px;
-}
-
-.profile-info-grid .profile-label {
-  opacity: 0.85;
-}
-
-.profile-info-grid .profile-value {
-  font-weight: 600;
-  word-break: break-word;
-}
-
-/* Responsive mobile */
-@media (max-width: 768px) {
-  .profile-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-  .profile-info-grid .profile-label {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-}
-
-/* --- GRIGLIA COLORI --- */
-.color-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.hide-radio {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.color-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 18px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.2s ease-in-out;
-  border: 2px solid transparent;
-  user-select: none;
-}
-
-.box-beige {
-  background-color: #B5A281;
-  color: #333333;
-  border-color: #e4d3c2;
-}
-
-.box-verde {
-  background-color: #4B8C56;
-  color: #ffffff;
-}
-
-.box-blu {
-  background-color: #2D69A0;
-  color: #ffffff;
-}
-
-.box-nero {
-  background-color: #1B191A;
-  color: #ffffff;
-}
-
-/* Effetto Hover leggero */
-.color-grid-item:hover .color-box {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Applica un doppio anello di fuoco (bianco + scuro) così risalta su qualsiasi colore di sfondo */
-.hide-radio:checked + .color-box {
-  transform: scale(0.97); /* Si schiaccia leggermente per dare feedback al clic */
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px #2d2d2d;
-}
-
-/* Accessibilità per chi naviga con la tastiera */
-.hide-radio:focus-visible + .color-box {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3a86c8;
-}
-
-/* --- OPZIONI TEMPO DI ALLENAMENTO --- */
-.time-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Spazio verticale tra un pulsante e l'altro */
-  margin-top: 10px;
-  width: 100%;
-}
-
-/* Stile base della barra/pulsante */
-.time-box {
-  display: block;
-  padding: 14px 16px;
-  background-color: #ffffff;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
+.pv-error-message {
+  color: #c1121f;
+  font-size: 0.88rem;
   font-weight: 500;
-  color: #333333;
-  transition: all 0.2s ease-in-out;
-  user-select: none;
+  margin: 0;
 }
 
-/* Effetto Hover quando si passa il mouse sopra */
-.time-list-item:hover .time-box {
-  border-color: #b0b0b0;
-  background-color: #f9f9f9;
-}
-
-/* Quando il radio è checked, la barra diventa scura con testo più marcato */
-.hide-radio:checked + .time-box {
-  border-color: #222222;
-  background-color: #f3f3f3;
-  font-weight: 600;
-  color: #000000;
-}
-
-/* --- SCELTA TRAINER --- */
-.trainer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Crea due colonne uguali */
-  gap: 12px; /* Spazio tra i pulsanti */
-  margin-top: 10px;
-  width: 100%;
-}
-
-/* Stile del box (identico a quello del tempo d'allenamento, adattato alla griglia) */
-.trainer-box {
+.pv-form-actions {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 16px 10px;
-  min-height: 56px; /* Forza un'altezza minima per far sì che i box siano simmetrici */
-  background-color: #ffffff;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #333333;
-  transition: all 0.2s ease-in-out;
-  user-select: none;
-  box-sizing: border-box;
+  gap: 14px;
+  margin-top: 8px;
 }
 
-/* Effetto Hover */
-.trainer-grid-item:hover .trainer-box {
-  border-color: #b0b0b0;
-  background-color: #f9f9f9;
+.pv-form-actions button {
+  flex: 1;
 }
 
-/* --- EFFETTO EVIDENZIATO (QUANDO SELEZIONATO) --- */
-/* Quando il radio è checked, applica lo stesso identico stile del tempo d'allenamento */
-.hide-radio:checked + .trainer-box {
-  border-color: #222222;
-  background-color: #f3f3f3;
-  font-weight: 600;
-  color: #000000;
+.pv-profile-loading {
+  color: var(--pv-muted);
+  font-size: 1.05rem;
+  margin: 0;
 }
 
-.patologie-list {
-  margin-bottom: 15px;
-  width: 100%;
+/* Responsive */
+@media (max-width: 600px) {
+  .pv-profile-card {
+    padding: 28px 20px;
+  }
+
+  .pv-profile-title {
+    font-size: 1.7rem;
+  }
+
+  .pv-profile-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }

@@ -128,47 +128,9 @@ function HomePage() {
 
   // --- RECUPERO ETÀ DA SUPABASE TRAMITE DATA DI NASCITA ---
   useEffect(() => {
-    async function fetchUserAge() {
-      try {
-        // 1. Prendi l'utente loggato nella sessione attuale
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw userError || new Error("Utente non autenticato");
-
-        // 2. Recupera la colonna 'data_nascita' dalla tabella 'profiles'
-        const { data, error } = await supabase
-          .from('profili') 
-          .select('data_nascita') // Assicurati che il nome della colonna sia identico a quello sul DB
-          .eq('id', user.id)
-          .single();
-
-        if (error) throw error;
-        
-        if (data && data.data_nascita) {
-          // --- CALCOLO DELL'ETÀ REALE ---
-          const oggi = new Date();
-          const compleanno = new Date(data.data_nascita);
-          
-          // Calcolo iniziale basato solo sulla differenza degli anni
-          let etaCalcolata = oggi.getFullYear() - compleanno.getFullYear();
-          
-          // Sottraiamo un anno se l'utente non ha ancora festeggiato il compleanno nell'anno corrente
-          const mese = oggi.getMonth() - compleanno.getMonth();
-          if (mese < 0 || (mese === 0 && oggi.getDate() < compleanno.getDate())) {
-            etaCalcolata--;
-          }
-
-          setEta(etaCalcolata);
-        }
-      } catch (error) {
-        console.error("Errore nel recupero o calcolo dell'età:", error.message);
-        // Fallback: se c'è un errore, per sicurezza impostiamo un'età standard (es. 30 anni)
-        setEta(30); 
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUserAge();
+    // Imposta eta predefinita senza interrogare la colonna legacy data_nascita
+    setEta(30);
+    setLoading(false);
   }, []);
 
   // --- LOGICA DI ORDINAMENTO DINAMICO ---

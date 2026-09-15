@@ -1,0 +1,457 @@
+/* ═══════════════════════════════════════════════════
+   DoctorPatientsPage.css — PhysioVision Redesign
+   Separated sections, no single white wrapper.
+   All classes: pv-patients-*
+   ═══════════════════════════════════════════════════ */
+
+/* ── Variables ────────────────────────────────────── */
+.pv-patients-page {
+  --pv-sage: #7aab8a;
+  --pv-sage-dark: #4d7c5f;
+  --pv-sage-light: #d8ede0;
+  --pv-text: #1f2824;
+  --pv-muted: #5f6f67;
+  --pv-bg: #f7faf8;
+  --pv-white: #ffffff;
+}
+
+/* ── Page — full background, NO white wrapper ─────── */
+.pv-patients-page {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(160deg, #f4f7f5 0%, #dff0e5 40%, #e8f3ed 100%);
+  padding: 48px 24px 72px;
+  box-sizing: border-box;
+}
+
+/* ── Content wrapper — wide, centered ─────────────── */
+.pv-patients-content {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Header — title + subtitle ON the background ──── */
+.pv-patients-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.pv-patients-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--pv-sage-dark);
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+}
+
+.pv-patients-header p {
+  font-size: 1.05rem;
+  color: var(--pv-muted);
+  margin: 0;
+  font-weight: 400;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ── Code card — compact, white, NOT full-width ───── */
+.pv-patients-code-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--pv-white);
+  border: 1.5px solid rgba(122, 171, 138, 0.22);
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 16px rgba(77, 124, 95, 0.07);
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pv-code-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pv-code-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.pv-code-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pv-sage-dark);
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 3px;
+  margin: 4px 0;
+}
+
+.pv-code-hint {
+  font-size: 0.78rem;
+  color: var(--pv-muted);
+  opacity: 0.8;
+}
+
+.pv-patients-btn-copy {
+  background: var(--pv-sage-dark);
+  color: var(--pv-white);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(77, 124, 95, 0.15);
+}
+
+.pv-patients-btn-copy:hover {
+  background: #3d6850;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(77, 124, 95, 0.22);
+}
+
+/* ── Section card — white card with sections inside ── */
+.pv-patients-section-card {
+  width: 100%;
+  max-width: 780px;
+  background: var(--pv-white);
+  border: 1.5px solid rgba(122, 171, 138, 0.18);
+  border-radius: 20px;
+  padding: 28px 28px 24px;
+  box-shadow: 0 4px 16px rgba(77, 124, 95, 0.07);
+  margin-bottom: 28px;
+}
+
+.pv-patients-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--pv-text);
+  margin: 0 0 18px;
+}
+
+.pv-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--pv-sage-light);
+  color: var(--pv-sage-dark);
+  border-radius: 10px;
+  padding: 2px 10px;
+  min-width: 24px;
+}
+
+/* ── Pending request rows ─────────────────────────── */
+.pv-pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pv-pending-request {
+  background: #fffcf7;
+  border: 1px solid #eeddc8;
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  transition: box-shadow 0.2s;
+}
+
+.pv-pending-request:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.pv-pending-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--pv-sage-light);
+  color: var(--pv-sage-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.pv-pending-info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pv-pending-name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.pv-pending-date {
+  font-size: 0.78rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+.pv-pending-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pv-patients-btn-accept {
+  background: var(--pv-sage-dark);
+  color: var(--pv-white);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.pv-patients-btn-accept:hover {
+  background: #3d6850;
+  transform: translateY(-1px);
+}
+
+.pv-patients-btn-accept:disabled,
+.pv-patients-btn-reject:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pv-patients-btn-reject {
+  background: #d44;
+  color: var(--pv-white);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.pv-patients-btn-reject:hover {
+  background: #b33;
+  transform: translateY(-1px);
+}
+
+/* ── Search bar — centered between sections ───────── */
+.pv-patients-search-wrapper {
+  width: 100%;
+  max-width: 580px;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.pv-patients-search-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #8fa99c;
+  pointer-events: none;
+}
+
+.pv-patients-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 18px 13px 48px;
+  background: var(--pv-white);
+  border: 1.5px solid #b8d9c5;
+  border-radius: 28px;
+  font-size: 0.98rem;
+  color: var(--pv-text);
+  outline: none;
+  box-shadow: 0 2px 8px rgba(77, 124, 95, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pv-patients-search:focus {
+  border-color: var(--pv-sage-dark);
+  box-shadow: 0 0 0 3px rgba(77, 124, 95, 0.15);
+}
+
+.pv-patients-search::placeholder {
+  color: #8fa99c;
+}
+
+/* ── Patient rows ─────────────────────────────────── */
+.pv-patient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pv-patient-row {
+  background: var(--pv-bg);
+  border: 1px solid rgba(122, 171, 138, 0.15);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.pv-patient-row:hover {
+  box-shadow: 0 3px 14px rgba(77, 124, 95, 0.09);
+  border-color: rgba(122, 171, 138, 0.3);
+}
+
+.pv-patient-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--pv-sage-light);
+  color: var(--pv-sage-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.pv-patient-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pv-patient-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.pv-patient-date {
+  font-size: 0.78rem;
+  color: var(--pv-muted);
+  margin-top: 2px;
+}
+
+.pv-patient-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pv-sage-dark);
+  background: var(--pv-sage-light);
+  padding: 4px 12px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+/* ── Empty states ─────────────────────────────────── */
+.pv-patients-empty {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--pv-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.pv-patients-empty-icon {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+/* ── Loading & error ──────────────────────────────── */
+.pv-patients-loading {
+  text-align: center;
+  color: var(--pv-muted);
+  padding: 48px 0;
+  font-size: 1rem;
+}
+
+.pv-patients-error {
+  text-align: center;
+  background: #fff0f0;
+  color: #b44a4a;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  max-width: 580px;
+  margin: 0 auto 28px;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .pv-patients-page {
+    padding: 32px 14px 48px;
+  }
+
+  .pv-patients-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .pv-patients-code-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .pv-code-info {
+    align-items: center;
+  }
+
+  .pv-patients-section-card {
+    padding: 20px 16px 18px;
+  }
+
+  .pv-pending-request {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pv-pending-info-row {
+    width: 100%;
+  }
+
+  .pv-pending-actions {
+    width: 100%;
+  }
+
+  .pv-pending-actions button {
+    flex: 1;
+  }
+
+  .pv-patient-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

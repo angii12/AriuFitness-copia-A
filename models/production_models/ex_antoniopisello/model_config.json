@@ -1,0 +1,16 @@
+{
+  "model": "TwoBranchLSTM",
+  "problem_type": "binary",
+  "target_exercise": "ex_antoniopisello",
+  "sequence_length": 8,
+  "keypoint_features": 36,
+  "angle_features": 8,
+  "hidden_size_1": 64,
+  "hidden_size_2": 32,
+  "dense_size": 64,
+  "dropout": 0.3,
+  "best_epoch": 23,
+  "best_validation_f1": 1.0,
+  "best_validation_loss": 7.450715347658842e-05,
+  "accepted_reps_count": 13
+}

@@ -50,11 +50,11 @@ function ExerciseListPage() {
         setLoading(true);
         const { data, error } = await supabase
           .from('esercizi')
-          .select('id, nome, zona_allenamento, video_tut_url, descrizione');
+          .select('id, exercise_id, nome, descrizione, categoria, video_tutorial_url');
         if (error) throw error;
         if (data) {
           setExercises(data);
-          const uniqueCategories = [...new Set(data.map(ex => ex.zona_allenamento).filter(Boolean))];
+          const uniqueCategories = [...new Set(data.map(ex => ex.categoria).filter(Boolean))];
           setCategories(['Tutti', ...uniqueCategories.sort()]);
         }
         setError(null);

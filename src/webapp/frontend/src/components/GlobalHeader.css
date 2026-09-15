@@ -104,3 +104,38 @@
     max-height: calc(100dvh - 68px);
   }
 }
+
+/* -- Public Header (/, /login, /register) -- */
+.public-header {
+  background: rgba(244, 247, 245, 0.88) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(122, 171, 138, 0.18);
+  box-shadow: 0 2px 12px rgba(77, 124, 95, 0.08);
+}
+.public-header .app-title-global { 
+  color: #2c3a35 !important; 
+  font-size: clamp(1.8rem, 5vw, 2.5rem) !important;
+}
+.public-header .app-title-global.second { 
+  color: #4d7c5f !important; 
+}
+.public-nav { display: flex; align-items: center; gap: 12px; }
+.public-nav-link {
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4d7c5f;
+  padding: 8px 18px;
+  border-radius: 50px;
+  border: 2px solid transparent;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  letter-spacing: 0.01em;
+}
+.public-nav-link:hover { background: rgba(122,171,138,0.12); border-color: rgba(77,124,95,0.2); }
+.public-nav-link--cta {
+  background: #4d7c5f;
+  color: #ffffff;
+  border-color: #4d7c5f;
+  box-shadow: 0 2px 8px rgba(77, 124, 95, 0.3);
+}
+.public-nav-link--cta:hover { background: #3d6850; border-color: #3d6850; color: #ffffff; }
