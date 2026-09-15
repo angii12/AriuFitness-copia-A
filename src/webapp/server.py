@@ -444,29 +444,15 @@ async def doctor_review_reps(exercise_id: str, payload: ReviewRepsSchema, auth_d
     """
     5. Approvazione / Rifiuto delle REP proposte da parte del medico.
     """
-    print(f"REVIEW DEBUG payload_count={len(payload.reviews)}")
-    if payload.reviews:
-        first = payload.reviews[0]
-        print(f"REVIEW DEBUG first_item=id:{first.id}/video_source:{first.video_source}/rep_index:{first.rep_index}/accepted:{first.accettata}")
-
     user_id, token = auth_data
     reviews = [r.dict() for r in payload.reviews]
     updated_count = db_service.update_rep_reviews(exercise_id, reviews, jwt_token=token)
     
-    # 6. Restituisci errore se non aggiorna niente
+    # Restituisci errore se non aggiorna niente
     if updated_count == 0 and len(payload.reviews) > 0:
-        print(f"REVIEW DEBUG ERROR: updated_count is 0 but payload has {len(payload.reviews)} items!")
+        print(f"[ERROR] Nessuna riga aggiornata in update_rep_reviews per exercise_id={exercise_id}")
         raise HTTPException(status_code=400, detail="Nessuna riga aggiornata (possibile mismatch ID o blocco RLS)")
     
-    print(f"REVIEW DEBUG updated_count_returned={updated_count}")
-    
-    # 3. Subito DOPO il salvataggio review, esegui query DB
-    db_reps = db_service.get_generated_reps(exercise_id, jwt_token=token)
-    db_total = len(db_reps)
-    db_accettate = len([r for r in db_reps if r.get("accettata_medico") is True])
-    print(f"REVIEW DEBUG db_total={db_total}")
-    print(f"REVIEW DEBUG db_accettate={db_accettate}")
-
     return {"status": "success", "exercise_id": exercise_id, "updated": updated_count, "accepted": sum(1 for r in reviews if r["accettata"])}
 
 
@@ -478,17 +464,9 @@ async def doctor_train_model(exercise_id: str, payload: TrainModelSchema, auth_d
        `models/production_models/<exercise_id>/` e registra il modello nel DB `exercise_models`.
     """
     user_id, token = auth_data
-    print(f"TRAIN AUTH jwt_present={bool(token)}")
-    print(f"TRAIN AUTH user_id={user_id}")
-    
-    # Adesso passiamo il token JWT al DB per leggere il contesto isolato per questo medico
+    # Passiamo il token JWT al DB per leggere il contesto isolato per questo medico
     all_reps = db_service.get_generated_reps(exercise_id, jwt_token=token)
-    
-    print(f"TRAIN DB visible_rows={len(all_reps)}")
-
     accepted_indices = [r["rep_index"] for r in all_reps if r.get("accettata_medico") is True]
-    
-    print(f"TRAIN DB accepted_rows={len(accepted_indices)}")
 
     if not accepted_indices:
         raise HTTPException(
@@ -594,9 +572,6 @@ def start_session(assignment: dict = Body(...), authorization: str = Header(None
                     model_data = m_resp.json()[0]
             except Exception as me:
                 print(f"[WARN] Errore recupero model_data: {me}")
-        
-        print("DEBUG data:", data)
-        print("DEBUG model_data:", model_data)
         if not model_data or model_data.get("status") not in ("active", "production"):
             raise HTTPException(status_code=400, detail="Modello non attivo o non valido")
         
@@ -950,6 +925,24 @@ async def websocket_endpoint(websocket: WebSocket):
             num_landmarks = len(landmarks) if landmarks else 0
             vis_media = float(np.mean([getattr(lm, "visibility", 1.0) for lm in landmarks])) if landmarks else 0.0
 
+            if not pose_detected:
+                raw_history_buffer.clear()
+                tracker.update(selected_exercise, None, 0.0)
+                await websocket.send_text(json.dumps({
+                    "status": "buffering",
+                    "frames_stacked": 0,
+                    "max_frames": 8,
+                    "exercise": selected_exercise or "In attesa...",
+                    "confidence": 0.0,
+                    "reps": tracker.get_reps(),
+                    "target_reps": target_reps,
+                    "phrase": tracker.get_phrase(),
+                    "landmarks": [],
+                    "llm_feedback": None,
+                    "llm_feedback_id": llm_feedback_id,
+                }))
+                continue
+
             raw_history_buffer.append((kp_data, an_data))
             if len(raw_history_buffer) > 32:
                 raw_history_buffer.pop(0)
@@ -960,12 +953,6 @@ async def websocket_endpoint(websocket: WebSocket):
             ] if landmarks else []
 
             if len(raw_history_buffer) < 8:
-                print(
-                    f"[LIVE DIAG] pose={pose_detected} ({num_landmarks} lm, vis={vis_media:.2f}) | "
-                    f"kp={kp_data.shape} ang={an_data.shape} | stacked={len(raw_history_buffer)}/8 (Buffering) | "
-                    f"conf=0.0% | state={tracker.current_state} reps={tracker.get_reps()} | phrase='{tracker.get_phrase()}'",
-                    flush=True
-                )
                 await websocket.send_text(json.dumps({
                     "status": "buffering",
                     "frames_stacked": len(raw_history_buffer),
@@ -994,14 +981,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Aggiorna la macchina a stati 0 -> 1 -> 0 con la confidenza del modello
             tracker.update(selected_exercise, landmarks, confidence_percentage)
-
-            print(
-                f"[LIVE DIAG] pose={pose_detected} ({num_landmarks} lm, vis={vis_media:.2f}) | "
-                f"kp={kp_data.shape} ang={an_data.shape} (tot={kp_data.size + an_data.size}) | "
-                f"stacked=8/8 | conf={confidence_percentage:5.1f}% | "
-                f"state={tracker.current_state} reps={tracker.get_reps()} | phrase='{tracker.get_phrase()}'",
-                flush=True
-            )
 
             current_time = time.time()
             if llm_task is not None and llm_task.done():

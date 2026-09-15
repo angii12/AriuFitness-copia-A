@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePrediction } from '../context/PredictionContext';
+import { getWsStreamUrl } from '../config/api';
 import './FitnessClassifier.css';
 
 const SKELETON_CONNECTIONS = [
@@ -31,6 +32,8 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
   const { prediction, setPrediction } = usePrediction();
 
   const [serverStatus, setServerStatus] = useState({ text: 'Disconnesso', color: '#dc3545' });
+  const [connectionLost, setConnectionLost] = useState(false);
+  const isIntentionalCloseRef = useRef(false);
 
   // Rendering dello skeleton leggero su overlay canvas
   useEffect(() => {
@@ -38,7 +41,7 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    if (!prediction.landmarks || prediction.landmarks.length < 29 || isExerciseFinished) {
+    if (!prediction.landmarks || prediction.landmarks.length < 29 || isExerciseFinished || connectionLost) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
@@ -86,7 +89,7 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
         ctx.stroke();
       }
     });
-  }, [prediction.landmarks, isExerciseFinished]);
+  }, [prediction.landmarks, isExerciseFinished, connectionLost]);
 
   useEffect(() => {
     console.log('Esercizio selezionato:', selectedExercise, 'gateActive:', gateActive);
@@ -98,20 +101,15 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
       return;
     }
 
-    // Reset flag completamento per nuova sessione
+    // Reset flag completamento e chiusura intenzionale per nuova sessione
     hasCompletedRef.current = false;
+    isIntentionalCloseRef.current = false;
+    setConnectionLost(false);
 
     // La webcam parte subito, indipendentemente dal WebSocket
     startWebcam();
 
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    let wsUrl;
-    if (isLocal) {
-      wsUrl = `ws://${window.location.hostname}:8000/ws/stream`;
-    } else {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.host}/ws/stream`;
-    }
+    const wsUrl = getWsStreamUrl();
     console.log('[WS] URL WebSocket finale:', wsUrl);
 
     wsRef.current = new WebSocket(wsUrl);
@@ -119,6 +117,7 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
     wsRef.current.onopen = () => {
       console.log('[WS] onopen: connessione stabilita');
       setServerStatus({ text: 'Rete AI Attiva', color: '#28a745' });
+      setConnectionLost(false);
 
       if (assignmentId && sessionToken) {
         wsRef.current.send(JSON.stringify({ assignment_id: assignmentId, token: sessionToken, llm_enabled: ttsEnabled }));
@@ -131,11 +130,12 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
     };
 
     wsRef.current.onmessage = (event) => {
-      if (hasCompletedRef.current) return;
+      if (hasCompletedRef.current || isIntentionalCloseRef.current) return;
       try {
         const data = JSON.parse(event.data);
         if (targetReps && targetReps > 0 && data.reps >= targetReps) {
           hasCompletedRef.current = true;
+          isIntentionalCloseRef.current = true;
           setPrediction({
             ...data,
             reps: targetReps,
@@ -155,17 +155,45 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
 
     wsRef.current.onclose = (event) => {
       console.log('[WS] onclose: code=', event.code, 'reason=', event.reason);
-      setServerStatus({ text: 'Disconnesso ❌', color: '#dc3545' });
+      const isNormalClose = isIntentionalCloseRef.current || hasCompletedRef.current || isExerciseFinished || event.code === 1000;
+      if (!isNormalClose) {
+        console.warn('[WS] Chiusura inattesa WebSocket - Connessione persa');
+        stopStreaming();
+        setConnectionLost(true);
+        setServerStatus({ text: 'Connessione persa', color: '#dc3545' });
+        setPrediction(prev => ({
+          ...prev,
+          phrase: 'Connessione persa. La sessione live non è più connessa al server.'
+        }));
+      } else {
+        setServerStatus({ text: 'Disconnesso', color: '#6c757d' });
+      }
     };
 
     wsRef.current.onerror = (err) => {
       console.error('[WS] onerror:', err);
-      setServerStatus({ text: 'Errore Connessione Back-end ⚠️', color: '#ffc107' });
+      const isNormalClose = isIntentionalCloseRef.current || hasCompletedRef.current || isExerciseFinished;
+      if (!isNormalClose) {
+        stopStreaming();
+        setConnectionLost(true);
+        setServerStatus({ text: 'Connessione persa', color: '#dc3545' });
+        setPrediction(prev => ({
+          ...prev,
+          phrase: 'Connessione persa. La sessione live non è più connessa al server.'
+        }));
+      }
     };
 
     return () => {
+      isIntentionalCloseRef.current = true;
       stopStreaming();
-      if (wsRef.current) wsRef.current.close();
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.onerror = null;
+        if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+          wsRef.current.close(1000, 'Component unmounted');
+        }
+      }
     };
   }, [selectedExercise, gateActive]);
 
@@ -173,9 +201,13 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
   // la causa dell'unmount, incluso il caso in cui getUserMedia si risolve dopo l'unmount
   useEffect(() => {
     return () => {
+      isIntentionalCloseRef.current = true;
       if (wsRef.current) {
         wsRef.current.onclose = null;
-        wsRef.current.close();
+        wsRef.current.onerror = null;
+        if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+          wsRef.current.close(1000, 'Cleanup unmount');
+        }
       }
       stopStreaming(); // stopStreaming usa streamRef, non dipende dal DOM
     };
@@ -194,6 +226,7 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
   useEffect(() => {
     if (isExerciseFinished) {
       hasCompletedRef.current = true;
+      isIntentionalCloseRef.current = true;
       stopStreaming();
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.close(1000, 'Exercise finished');
@@ -256,7 +289,7 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
 
   const startStreaming = () => {
     intervalRef.current = setInterval(() => {
-      if (hasCompletedRef.current || isExerciseFinished) return;
+      if (hasCompletedRef.current || isExerciseFinished || isIntentionalCloseRef.current || connectionLost) return;
       if (!videoRef.current || !canvasRef.current || !wsRef.current) return;
       if (wsRef.current.readyState !== WebSocket.OPEN) return;
 
@@ -343,6 +376,35 @@ const FitnessClassifier = ({ selectedExercise, assignmentId, sessionToken, isCou
           }}
         />
         <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
+
+        {/* Overlay Connessione Persa in caso di chiusura inattesa */}
+        {connectionLost && !isExerciseFinished && (
+          <div className="connection-lost-overlay" style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(20, 24, 22, 0.82)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 30,
+            color: '#ffffff',
+            textAlign: 'center',
+            padding: '24px',
+            backdropFilter: 'blur(6px)',
+          }}>
+            <div style={{ fontSize: '2.8rem', marginBottom: '10px' }}>📡⚡</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', margin: '0 0 6px', color: '#ff6b6b' }}>
+              Connessione persa
+            </h3>
+            <p style={{ fontSize: '0.95rem', margin: 0, color: '#e0e0e0', maxWidth: '320px', lineHeight: 1.4 }}>
+              La sessione live non è più connessa al server.
+            </p>
+          </div>
+        )}
 
         {/* Overlay Video Tutorial - solo in modalità sovrapposizione */}
         {tutorialUrl && tutorialMode === 'sovrapposizione' && (

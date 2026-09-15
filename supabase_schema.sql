@@ -296,6 +296,20 @@ CREATE TABLE IF NOT EXISTS public.ripetizioni_generate (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 8. TABELLA REHAB_SESSIONS (Tracciamento sessioni riabilitative paziente)
+CREATE TABLE IF NOT EXISTS public.rehab_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID REFERENCES public.assigned_exercises(id) ON DELETE CASCADE NOT NULL,
+    patient_id UUID REFERENCES public.profili(id) ON DELETE CASCADE NOT NULL,
+    doctor_id UUID REFERENCES public.profili(id) ON DELETE CASCADE NOT NULL,
+    exercise_id TEXT REFERENCES public.esercizi(exercise_id) ON DELETE CASCADE NOT NULL,
+    reps_completed INT NOT NULL,
+    target_reps INT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('completed', 'interrupted')),
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
 -- =======================================================
 -- RPC SECURE SEARCH FUNCTION FIND_DOCTOR_BY_CODE (SOLO PAZIENTI)
 -- =======================================================
@@ -495,12 +509,15 @@ DROP POLICY IF EXISTS "Medico revoca assigned_exercises" ON public.assigned_exer
 DROP POLICY IF EXISTS "Medici gestiscono ripetizioni_generate" ON public.ripetizioni_generate;
 DROP POLICY IF EXISTS "Medici gestiscono ripetizioni_generate dei propri esercizi" ON public.ripetizioni_generate;
 
+DROP POLICY IF EXISTS "Lettura rehab_sessions" ON public.rehab_sessions;
+DROP POLICY IF EXISTS "Paziente inserisce le proprie sessioni" ON public.rehab_sessions;
+
 -- Drop trigger/funzione FASE 4A.1 (idempotente)
 DROP TRIGGER IF EXISTS trg_validate_assigned_exercise ON public.assigned_exercises;
 DROP FUNCTION IF EXISTS public.validate_assigned_exercise();
 
 
--- Abilita RLS su tutte le 7 tabelle
+-- Abilita RLS su tutte le 8 tabelle
 ALTER TABLE public.profili ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.esercizi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exercise_profiles ENABLE ROW LEVEL SECURITY;
@@ -508,6 +525,7 @@ ALTER TABLE public.exercise_models ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.doctor_patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.assigned_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ripetizioni_generate ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rehab_sessions ENABLE ROW LEVEL SECURITY;
 
 -- FUNZIONE HELPER IS_MEDICO SICURA
 CREATE OR REPLACE FUNCTION public.is_medico()
@@ -737,6 +755,19 @@ CREATE POLICY "Medici gestiscono ripetizioni_generate dei propri esercizi"
         AND (e.creato_da = auth.uid() OR e.creato_da IS NULL)
     )
   );
+
+-- 11. POLICIES DEFINITIVE PER `public.rehab_sessions`
+-- SELECT: il medico vede le sessioni dei propri pazienti; il paziente vede le proprie
+CREATE POLICY "Lettura rehab_sessions"
+  ON public.rehab_sessions FOR SELECT
+  TO authenticated
+  USING (doctor_id = auth.uid() OR patient_id = auth.uid());
+
+-- INSERT: il paziente inserisce le proprie sessioni riabilitative
+CREATE POLICY "Paziente inserisce le proprie sessioni"
+  ON public.rehab_sessions FOR INSERT
+  TO authenticated
+  WITH CHECK (patient_id = auth.uid());
 
 -- =======================================================
 -- FASE 5: TRIGGER AUTO-CREAZIONE PROFILO DA AUTH.USERS

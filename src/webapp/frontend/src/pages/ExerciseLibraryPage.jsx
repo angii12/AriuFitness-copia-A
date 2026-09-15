@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { supabase } from '../SupabaseClient';
+import { API_BASE_URL } from '../config/api';
 import '../index.css';
 import './ExerciseLibraryPage.css';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function ExerciseLibraryPage() {
   const { exerciseId: urlExerciseId } = useParams();

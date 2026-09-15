@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../SupabaseClient';
 import { usePrediction } from '../context/PredictionContext';
 import FitnessClassifier from '../components/FitnessClassifier';
+import { API_BASE_URL } from '../config/api';
 import './PatientSessionPage.css';
 
 function PatientSessionPage() {
@@ -41,7 +42,7 @@ function PatientSessionPage() {
       hasSavedRef.current = true;
       setIsEnding(true);
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/patient/session/interrupt', {
+        const response = await fetch(`${API_BASE_URL}/api/patient/session/interrupt`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ function PatientSessionPage() {
         setSessionToken(token);
 
         // 3. Chiama endpoint FastAPI backend per inizializzare e verificare l'esercizio
-        const response = await fetch(`http://127.0.0.1:8000/api/patient/session/start?assignment_id=${encodeURIComponent(assignmentId)}`, {
+        const response = await fetch(`${API_BASE_URL}/api/patient/session/start?assignment_id=${encodeURIComponent(assignmentId)}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -138,7 +139,7 @@ function PatientSessionPage() {
       hasSavedRef.current = true;
       const saveSessionCompletion = async () => {
         try {
-          const response = await fetch('http://127.0.0.1:8000/api/patient/session/complete', {
+          const response = await fetch(`${API_BASE_URL}/api/patient/session/complete`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

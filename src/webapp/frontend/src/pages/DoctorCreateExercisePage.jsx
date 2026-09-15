@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import BodyJointSelector from '../components/BodyJointSelector';
 import { supabase } from '../SupabaseClient';
+import { API_BASE_URL } from '../config/api';
 import './DoctorCreateExercisePage.css';
-
-const API_BASE_URL = 'http://localhost:8000';
 
 const RepMiniPlayer = ({ rep, exerciseId }) => {
   const videoRef = useRef(null);

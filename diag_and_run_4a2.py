@@ -71,15 +71,22 @@ def RPC(fn, body=None, token=None):
     h = jwt_write(token) if token else svc_write()
     return requests.post(f"{REST}/rpc/{fn}", headers=h, json=body or {})
 
+sys.path.insert(0, str(os.path.abspath("src")))
+from services.auth_test_guard import assert_safe_test_user_operation, safe_admin_create_user, safe_admin_delete_user
+
 def admin_create(email, pwd):
-    r = requests.post(f"{AUTH}/admin/users", headers=svc_write(),
-        json={"email": email, "password": pwd, "email_confirm": True})
+    assert_safe_test_user_operation(email, "admin_create")
+    r = safe_admin_create_user(
+        SUPABASE_URL,
+        SERVICE_KEY,
+        {"email": email, "password": pwd, "email_confirm": True}
+    )
     if r.status_code not in (200, 201):
         raise RuntimeError(f"admin_create {email}: {r.status_code} {r.text[:300]}")
     return r.json()["id"]
 
 def admin_del(uid):
-    requests.delete(f"{AUTH}/admin/users/{uid}", headers=svc_write())
+    safe_admin_delete_user(SUPABASE_URL, SERVICE_KEY, uid)
     DELETE("profili", f"id=eq.{uid}")
 
 def signin(email, pwd):

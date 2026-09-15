@@ -72,13 +72,20 @@ def patch(table, qs, body, token=None):
 def delete(table, qs):
     return requests.delete(f"{REST}/{table}?{qs}", headers=svc())
 
+sys.path.insert(0, str(os.path.abspath("src")))
+from services.auth_test_guard import assert_safe_test_user_operation, safe_admin_create_user, safe_admin_delete_user
+
 # ───────────────────────────────────────────────────────────────
 # AUTH HELPERS
 # ───────────────────────────────────────────────────────────────
 def admin_create_user(email, password, nome, ruolo):
-    """Crea utente via Admin API (service_role) + inserisce profilo."""
-    r = requests.post(f"{AUTH}/admin/users", headers=svc(),
-        json={"email": email, "password": password, "email_confirm": True})
+    """Crea utente via Admin API (service_role) in modo protetto + inserisce profilo."""
+    assert_safe_test_user_operation(email, "admin_create_user")
+    r = safe_admin_create_user(
+        SUPABASE_URL,
+        SERVICE_KEY,
+        {"email": email, "password": password, "email_confirm": True}
+    )
     if r.status_code not in (200, 201):
         raise RuntimeError(f"Creazione utente fallita [{r.status_code}]: {r.text[:300]}")
     uid = r.json()["id"]
@@ -91,7 +98,7 @@ def admin_create_user(email, password, nome, ruolo):
     return uid
 
 def admin_delete_user(uid):
-    requests.delete(f"{AUTH}/admin/users/{uid}", headers=svc())
+    safe_admin_delete_user(SUPABASE_URL, SERVICE_KEY, uid)
     delete("profili", f"id=eq.{uid}")
 
 def signin(email, password):

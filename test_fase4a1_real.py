@@ -117,15 +117,20 @@ def run_test(label, fn):
         print(f"  ❌ {label}")
         print(f"     → ECCEZIONE: {e}")
 
+sys.path.insert(0, str(os.path.abspath("src")))
+from services.auth_test_guard import assert_safe_test_user_operation, safe_admin_create_user, safe_admin_delete_user
+
 # ──────────────────────────────────────────────────────────────────────────────
 # AUTH HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
 def signup(email, password, nome, ruolo):
-    """Crea utente via Auth Admin (service_role) e inserisce profilo."""
-    r = requests.post(f"{AUTH}/admin/users",
-        headers=svc_hdr(),
-        json={"email": email, "password": password,
-              "email_confirm": True, "user_metadata": {}})
+    """Crea utente via Auth Admin (service_role) in modo sicuro e inserisce profilo."""
+    assert_safe_test_user_operation(email, "signup_test_user")
+    r = safe_admin_create_user(
+        SUPABASE_URL,
+        SERVICE_KEY,
+        {"email": email, "password": password, "email_confirm": True, "user_metadata": {}}
+    )
     if r.status_code not in (200, 201):
         raise RuntimeError(f"signup fallito per {email}: {r.status_code} {r.text[:300]}")
     uid = r.json()["id"]
@@ -147,7 +152,7 @@ def signin(email, password):
     return r.json()["access_token"], r.json()["user"]["id"]
 
 def delete_user_svc(uid):
-    requests.delete(f"{AUTH}/admin/users/{uid}", headers=svc_hdr())
+    safe_admin_delete_user(SUPABASE_URL, SERVICE_KEY, uid)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PRE-FLIGHT CHECK

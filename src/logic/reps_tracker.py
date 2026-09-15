@@ -46,7 +46,18 @@ class UniversalRepTracker:
         now = time.time()
 
         if not landmarks or len(landmarks) < 13:
-            self.phrase = "Inquadrati completamente per iniziare."
+            # Se la posa viene persa durante la fase attiva, la ripetizione corrente viene annullata
+            if self.current_state == self.STATE_ACTIVE:
+                self.current_state = self.STATE_REST
+                self.active_confirm_count = 0
+                self.rest_confirm_count = 0
+                self.active_frames_count = 0
+                self.rep_start_time = 0.0
+            else:
+                self.active_confirm_count = 0
+                self.rest_confirm_count = 0
+
+            self.phrase = "Posizionati nuovamente davanti alla videocamera."
             return
 
         if self.current_state == self.STATE_REST:

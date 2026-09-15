@@ -9,5 +9,10 @@ src/webapp/ssl/
 *.h5
 *.ckpt
 .env.service
+.env.local
+.env.*.local
 scratch/
+node_modules/
+dist/
+.venv/
 
