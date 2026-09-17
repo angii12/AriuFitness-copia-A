@@ -105,11 +105,15 @@ function PatientSessionPage() {
         setSessionToken(token);
 
         // 3. Chiama endpoint FastAPI backend per inizializzare e verificare l'esercizio
-        const response = await fetch(`${API_BASE_URL}/api/patient/session/start?assignment_id=${encodeURIComponent(assignmentId)}`, {
+        const response = await fetch(`${API_BASE_URL}/api/patient/session/start`, {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          body: JSON.stringify({
+            assignment_id: assignmentId
+          })
         });
 
         if (!response.ok) {
@@ -278,7 +282,7 @@ function PatientSessionPage() {
           disabled={isEnding}
           style={{ padding: '10px 22px', borderRadius: '10px', border: '1.5px solid #b8d9c5', backgroundColor: '#fff', color: '#5f6f67', cursor: isEnding ? 'wait' : 'pointer', fontWeight: '700', fontSize: '0.9rem', transition: 'background 0.15s', opacity: isEnding ? 0.7 : 1 }}
         >
-          {isEnding ? 'Salvataggio…' : 'Termina Sessione'}
+          {isEnding ? 'Salvataggio…' : 'Termina sessione'}
         </button>
       </div>
 

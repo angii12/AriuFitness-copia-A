@@ -202,36 +202,53 @@ const GlobalHeader = () => {
             <div
               className="user-role-header-tag"
               style={{
-                padding: '8px 12px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                color: '#4d7c5f',
-                borderBottom: '1px solid #e5e5e5',
+                padding: '8px 14px 10px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                color: 'var(--pv-sage-dark, #4d7c5f)',
+                borderBottom: '1.5px solid rgba(122, 171, 138, 0.2)',
+                marginBottom: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              RUOLO: {userRole.toUpperCase()}
+              <span>RUOLO:</span>
+              <span style={{
+                background: 'rgba(122, 171, 138, 0.2)',
+                color: 'var(--pv-sage-deep, #274433)',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontSize: '0.7rem',
+              }}>
+                {userRole.toUpperCase()}
+              </span>
             </div>
 
             {navItems.map(
-              ({ label, to }, index) => (
-                <Link
-                  key={`${to}_${index}`}
-                  to={to}
-                  className="hm-item"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                >
-                  <span>{label}</span>
-                </Link>
-              )
+              ({ label, to }, index) => {
+                const isActive = location.pathname === to || (to !== '/medico' && to !== '/paziente' && location.pathname.startsWith(to));
+                return (
+                  <Link
+                    key={`${to}_${index}`}
+                    to={to}
+                    className={`hm-item${isActive ? ' hm-item--active' : ''}`}
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                  >
+                    <span>{label}</span>
+                  </Link>
+                );
+              }
             )}
 
             <button
               className="hm-item hm-logout"
               onClick={handleLogout}
             >
-              <span>Logout</span>
+              <span>🚪 Logout</span>
             </button>
           </nav>
         )}

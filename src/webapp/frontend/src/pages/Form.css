@@ -3,103 +3,116 @@
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 80px);
-  padding: clamp(10px, 4vw, 20px);
-  background: var(--page-bg-color, #5B120F);;
+  padding: clamp(20px, 4vw, 40px);
+  background: linear-gradient(150deg, #f4f7f5 0%, #d8ede0 50%, #e4f0f7 100%) !important;
   overflow: hidden;
 }
-  
+
 .form-card {
-    width: 100%;
-    max-width: 450px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: #ffffff;
-    color: #5B120F;
-    padding: clamp(30px, 5vw, 40px);
-    border-radius: 15px;
-    position: relative;
-    margin-top: -35px;
-    z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #ffffff;
+  color: #2c3a35 !important;
+  padding: clamp(28px, 5vw, 40px);
+  border-radius: 20px !important;
+  border: 1.5px solid rgba(122, 171, 138, 0.25);
+  box-shadow: 0 8px 32px rgba(77, 124, 95, 0.14);
+  position: relative;
+  z-index: 1;
 }
 
 .form-card h2 {
-    font-size: clamp(1.8rem, 5vw, 2.5rem);
-    font-weight: 600;
-    margin-bottom: clamp(8px, 2vw, 10px);
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  font-size: clamp(1.8rem, 5vw, 2.4rem) !important;
+  font-weight: 700;
+  color: #4d7c5f !important;
+  margin-bottom: clamp(8px, 2vw, 12px);
+  text-shadow: none !important;
 }
 
 .form-card form {
-    display: flex;
-    flex-direction: column;
-    width: 100%; 
-    gap: clamp(12px, 2vw, 15px);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: clamp(12px, 2vw, 16px);
 }
-  
+
 .form-subtitle {
-    font-size: clamp(0.95rem, 2vw, 1.1rem);
-    font-weight: 300;
-    margin-bottom: clamp(20px, 5vw, 30px);
+  font-size: clamp(0.95rem, 2vw, 1.05rem) !important;
+  font-weight: 400;
+  color: #6b7d74 !important;
+  margin-bottom: clamp(18px, 4vw, 26px);
+  line-height: 1.4;
 }
-  
+
 .form-card input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: clamp(12px, 2vw, 15px);
-    margin-bottom: clamp(15px, 3vw, 20px);
-    border-radius: 10px;
-    border: 3px solid #5B120F;
-    background: #ffffff;
-    color: #2d2d2d;
-    font-size: clamp(0.9rem, 2vw, 1rem);
-    outline: none;
-    transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(11px, 2vw, 14px);
+  margin-bottom: clamp(12px, 2.5vw, 16px);
+  border-radius: 12px;
+  border: 2px solid #b8d9c5 !important;
+  background: #ffffff;
+  color: #2c3a35 !important;
+  font-size: clamp(0.92rem, 2vw, 1rem) !important;
+  outline: none;
+  transition: all 0.2s ease;
 }
 
 .form-card input:focus {
-    border-color: #93100b;
-    box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+  border-color: #7aab8a !important;
+  box-shadow: 0 0 0 3px rgba(122, 171, 138, 0.18) !important;
 }
 
 .form-card input::placeholder {
-    color: #5B120F;
+  color: #8fa99c !important;
 }
 
 .form-button {
-    width: 100%;
-    padding: clamp(12px, 2vw, 15px);
-    border: none;
-    border-radius: 10px;
-    background: #5B120F;
-    color: #ffffff;
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  width: 100%;
+  padding: clamp(12px, 2vw, 15px);
+  border: none;
+  border-radius: 12px;
+  background: #4d7c5f !important;
+  color: #ffffff;
+  font-size: clamp(1rem, 2vw, 1.1rem) !important;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(77, 124, 95, 0.25);
+  transition: all 0.2s ease;
 }
 
 .form-button:hover {
-    background: #93100b;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  background: #3d6850 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(77, 124, 95, 0.3);
 }
-  
+
+.form-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .switch-form-text {
-    margin-top: 25px;
+  margin-top: 22px;
+  color: #6b7d74;
+  font-size: 0.95rem;
 }
-  
+
 .switch-form-link {
-    color: #5B120F;
-    font-weight: 600;
-    text-decoration: none;
-    transition: color 0.2s ease;
+  color: #4d7c5f !important;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .switch-form-link:hover {
-    text-decoration: underline;
-    color: #93100b;
+  text-decoration: underline;
+  color: #3d6850 !important;
 }
 
 .waves {
@@ -119,16 +132,22 @@
   gap: 6px;
 }
 
+.form-gender-dropdown label {
+  color: #4d7c5f !important;
+  font-size: 0.95rem !important;
+  font-weight: 600;
+}
+
 /* Stile del menù a tendina */
 .form-gender-dropdown select {
   width: 100%;
   box-sizing: border-box;
-  padding: clamp(12px, 2vw, 15px);
-  margin-bottom: clamp(15px, 3vw, 20px);
-  border-radius: 10px;
-  border: 3px solid #5B120F;
+  padding: clamp(11px, 2vw, 14px);
+  margin-bottom: clamp(12px, 2.5vw, 16px);
+  border-radius: 12px;
+  border: 2px solid #b8d9c5 !important;
   background: #ffffff;
-  color: #2d2d2d;
+  color: #2c3a35;
   font-size: clamp(0.9rem, 2vw, 1rem);
   outline: none;
   transition: all 0.2s ease;
@@ -136,8 +155,8 @@
 }
 
 .form-gender-dropdown select:focus {
-  border-color: #93100b;
-  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+  border-color: #7aab8a !important;
+  box-shadow: 0 0 0 3px rgba(122, 171, 138, 0.18) !important;
 }
 
 /* --- PATOLOGIE INPUT CONTAINER (usato da Register e Profilo) --- */
@@ -150,8 +169,8 @@
 .patologie-input-container input {
   flex: 1;
   padding: clamp(10px, 2vw, 12px);
-  border-radius: 8px;
-  border: 3px solid #5B120F;
+  border-radius: 10px;
+  border: 2px solid #b8d9c5 !important;
   background: #ffffff;
   color: #2d2d2d;
   font-size: clamp(0.85rem, 2vw, 0.95rem);
@@ -161,14 +180,14 @@
 }
 
 .patologie-input-container input:focus {
-  border-color: #93100b;
-  box-shadow: 0 0 0 3px rgba(139, 90, 60, 0.1);
+  border-color: #7aab8a !important;
+  box-shadow: 0 0 0 3px rgba(122, 171, 138, 0.18) !important;
 }
 
 .patologie-add-button {
   padding: clamp(10px, 2vw, 12px) clamp(14px, 3vw, 18px);
-  border-radius: 8px;
-  background-color: #5B120F;
+  border-radius: 10px;
+  background-color: var(--pv-sage-dark, #4d7c5f);
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -180,12 +199,12 @@
 }
 
 .patologie-add-button:hover {
-  background-color: #93100b;
+  background-color: var(--pv-sage-deep, #3d6850);
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(77, 124, 95, 0.2);
 }
 
-/* --- COLORE ARIU SELECT - OPZIONI COLORATE (usato da Register e Profilo) --- */
+/* --- COLORE ARIU SELECT - OPZIONI COLORATE --- */
 #colore_ariu option[value="beige"] {
   background-color: #f5e6d3;
   color: #2d2d2d;
@@ -205,64 +224,23 @@
   background-color: #000000;
   color: #ffffff;
 }
-/* -- PhysioVision Form Override -- palette swap --*/
-.form-page-container {
-  background: linear-gradient(150deg, #f4f7f5 0%, #d8ede0 50%, #e4f0f7 100%) !important;
-}
-.form-card {
-  color: #2c3a35 !important;
-  box-shadow: 0 8px 32px rgba(77, 124, 95, 0.14);
-  border: 1.5px solid rgba(122, 171, 138, 0.25);
-  border-radius: 20px !important;
-}
-.form-card h2 {
-  color: #4d7c5f !important;
-  text-shadow: none !important;
-  font-size: clamp(2.0rem, 6vw, 2.8rem) !important;
-}
-.form-subtitle {
-  color: #6b7d74 !important;
-  font-size: clamp(1.05rem, 2.5vw, 1.25rem) !important;
-}
-.form-card input {
-  border: 2px solid #b8d9c5 !important;
-  color: #2c3a35 !important;
-  font-size: clamp(0.95rem, 2vw, 1.1rem) !important;
-}
-.form-card input:focus {
-  border-color: #7aab8a !important;
-  box-shadow: 0 0 0 3px rgba(122, 171, 138, 0.18) !important;
-}
-.form-card input::placeholder { color: #8fa99c !important; }
-.form-button {
-  background: #4d7c5f !important;
-  box-shadow: 0 3px 12px rgba(77, 124, 95, 0.3);
-  font-size: clamp(1.05rem, 2.5vw, 1.25rem) !important;
-}
-.form-button:hover { background: #3d6850 !important; }
-.switch-form-link { 
-  color: #4d7c5f !important;
-  font-size: 1.05rem !important;
-}
-.switch-form-link:hover { color: #3d6850 !important; }
-.form-gender-dropdown select {
-  border: 2px solid #b8d9c5 !important;
-}
-.form-gender-dropdown select:focus {
-  border-color: #7aab8a !important;
-  box-shadow: 0 0 0 3px rgba(122,171,138,0.18) !important;
-}
-.form-gender-dropdown label {
-  color: #4d7c5f !important;
-  font-size: 1.05rem !important;
-}
+
 .show-password-button {
   background: #e4f0f7 !important;
   color: #4d7c5f !important;
   font-size: 0.9rem !important;
   padding: 6px 12px !important;
+  border-radius: 8px;
+  border: 1px solid rgba(122, 171, 138, 0.3);
+  cursor: pointer;
 }
+
 .show-password-button:hover {
   background: #d8ede0 !important;
 }
-.error-message { color: #b44a4a !important; }
+
+.error-message {
+  color: #b44a4a !important;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}

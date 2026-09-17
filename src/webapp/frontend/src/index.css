@@ -3,14 +3,22 @@
 :root {
   width: 100%;
 
-  --primary-color: #ffffff;
-  --secondary-color: #5B120F;
+  --pv-sage: #7aab8a;
+  --pv-sage-dark: #4d7c5f;
+  --pv-sage-light: #d8ede0;
+  --pv-text: #1f2824;
+  --pv-muted: #5f6f67;
+  --pv-bg: #f7faf8;
+  --pv-white: #ffffff;
 
-  --text-color: #2d2d2d;
+  --primary-color: #4d7c5f;
+  --secondary-color: #3d6850;
+
+  --text-color: #1f2824;
   --light-text: #ffffff;
   --dark-text-color: #1a1a1a;
 
-  --page-bg-color: #ffffff;
+  --page-bg-color: #f7faf8;
 }
 
 
@@ -19,11 +27,10 @@
    ====================================================== */
 .pv-doctor-page-bg,
 .pv-patient-page-bg {
-  background: linear-gradient(135deg, #e9f4ec 0%, #deeee3 100%);
-  min-height: 100vh;
+  background: linear-gradient(160deg, #f7faf8 0%, #edf5ef 50%, #e6f1ea 100%);
+  min-height: calc(100vh - 56px);
   width: 100%;
-  margin-top: -56px;
-  padding-top: 56px;
+  box-sizing: border-box;
 }
 
 
@@ -46,7 +53,7 @@ body {
 
   min-height: 100vh;
 
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Poppins', sans-serif;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -68,42 +75,40 @@ h1 {
 
 
 /* ======================================================
-   BOTTONI GLOBALI LEGACY
+   BOTTONI GLOBALI
    ====================================================== */
 
 button {
-  border-radius: 8px;
+  border-radius: 10px;
 
   border: 1px solid transparent;
 
-  padding:
-    clamp(0.5em, 2vw, 0.6em) clamp(1em, 3vw, 1.2em);
+  padding: clamp(0.5em, 2vw, 0.65em) clamp(1em, 3vw, 1.3em);
 
   font-size: clamp(0.9rem, 2vw, 1rem);
 
-  font-weight: 500;
+  font-weight: 600;
 
   font-family: inherit;
 
-  background-color: #5B120F;
+  background-color: var(--pv-sage-dark);
 
   color: #ffffff;
 
   cursor: pointer;
 
-  transition: all 0.25s;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background-color: #5b120f46;
+  background-color: #3d6850;
 
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(77, 124, 95, 0.2);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 3px auto rgba(77, 124, 95, 0.35);
 }
 
 
@@ -113,13 +118,13 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #2d2d2d;
+    color: #1f2824;
 
-    background-color: #f5e6d3;
+    background-color: #f7faf8;
   }
 
   button {
-    background-color: #5B120F;
+    background-color: var(--pv-sage-dark);
 
     color: #ffffff;
   }
@@ -127,7 +132,7 @@ button:focus-visible {
 
 
 /* ======================================================
-   CARD LEGACY
+   CARD GLOBALE
    ====================================================== */
 
 .glass-card {
@@ -135,11 +140,13 @@ button:focus-visible {
 
   border-radius: 20px;
 
-  border: 1px solid #ffffff;
+  border: 1.5px solid rgba(122, 171, 138, 0.22);
 
-  padding: clamp(20px, 5vw, 40px);
+  padding: clamp(20px, 5vw, 36px);
 
-  color: #2d2d2d;
+  color: #1f2824;
+
+  box-shadow: 0 8px 24px rgba(77, 124, 95, 0.06);
 }
 
 

@@ -122,22 +122,34 @@ function ConnectDoctorPage() {
 
   return (
     <div className="form-page-container" style={{ background: 'transparent' }}>
-      <div className="glass-card form-card" style={{ maxWidth: '580px' }}>
+      <div className="glass-card form-card" style={{ maxWidth: '560px', width: '100%' }}>
         <h2>🩺 Collega il tuo Medico</h2>
-        <p className="form-subtitle">Associa il tuo account al medico per ricevere i piani di riabilitazione</p>
+        <p className="form-subtitle">Associa il tuo account al medico per ricevere i piani di riabilitazione personalizzati</p>
 
         {connectionState.status === 'loading' ? (
-          <p>Verifica dello stato in corso...</p>
+          <div style={{ padding: '30px 0', color: 'var(--pv-sage-dark, #4d7c5f)', fontWeight: 600 }}>
+            Verifica dello stato in corso...
+          </div>
         ) : connectionState.status === 'none' ? (
           /* STATO 1: NESSUN MEDICO COLLEGATO */
-          <div style={{ marginTop: '20px' }}>
-            <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem' }}>
+          <div style={{ width: '100%', marginTop: '10px' }}>
+            <div style={{
+              backgroundColor: 'rgba(122, 171, 138, 0.12)',
+              color: 'var(--pv-sage-deep, #274433)',
+              border: '1.5px solid rgba(122, 171, 138, 0.25)',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              marginBottom: '22px',
+              fontSize: '0.92rem',
+              lineHeight: 1.5,
+              textAlign: 'left'
+            }}>
               ℹ️ <strong>Nessun medico collegato:</strong> Richiedi al tuo dottore il suo codice univoco (es. <code>DOC-A7K92Q</code>) ed inseriscilo qui sotto.
             </div>
 
             <form onSubmit={handleSubmitCode}>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontWeight: 'bold', color: '#5B120F', marginBottom: '6px' }}>
+              <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+                <label style={{ display: 'block', fontWeight: 700, color: 'var(--pv-sage-dark, #4d7c5f)', marginBottom: '8px', fontSize: '0.95rem' }}>
                   Codice Medico Univoco *
                 </label>
                 <input
@@ -145,7 +157,7 @@ function ConnectDoctorPage() {
                   placeholder="Es. DOC-A7K92Q"
                   value={doctorCode}
                   onChange={(e) => setDoctorCode(e.target.value.toUpperCase())}
-                  style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}
+                  style={{ textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 'bold' }}
                   required
                 />
               </div>
@@ -159,30 +171,43 @@ function ConnectDoctorPage() {
           </div>
         ) : connectionState.status === 'pending' ? (
           /* STATO 2: RICHIESTA IN ATTESA */
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <div style={{ backgroundColor: '#e3f2fd', color: '#0d47a1', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-              <h3 style={{ marginBottom: '10px' }}>⏳ Richiesta in Attesa di Conferma</h3>
-              <p style={{ fontSize: '1rem' }}>
+          <div style={{ width: '100%', marginTop: '10px', textAlign: 'center' }}>
+            <div style={{
+              backgroundColor: 'rgba(255, 193, 7, 0.12)',
+              color: '#856404',
+              border: '1.5px solid rgba(255, 193, 7, 0.3)',
+              padding: '24px 20px',
+              borderRadius: '16px',
+              marginBottom: '15px'
+            }}>
+              <h3 style={{ marginBottom: '10px', fontSize: '1.15rem', color: '#b7791f' }}>⏳ Richiesta in Attesa di Conferma</h3>
+              <p style={{ fontSize: '0.95rem', margin: '8px 0', color: '#4a5568' }}>
                 Hai inviato una richiesta al medico:
               </p>
-              <h4 style={{ fontSize: '1.2rem', color: '#5B120F', marginTop: '8px' }}>
+              <h4 style={{ fontSize: '1.25rem', color: 'var(--pv-sage-deep, #274433)', marginTop: '8px', fontWeight: 700 }}>
                 Dr. {connectionState.doctor?.nome} {connectionState.doctor?.cognome}
               </h4>
-              <p style={{ fontSize: '0.85rem', color: '#555', marginTop: '10px' }}>
+              <p style={{ fontSize: '0.85rem', color: '#718096', marginTop: '12px' }}>
                 Il tuo medico deve accedere al proprio portale ed accettare la richiesta prima che sia attiva.
               </p>
             </div>
           </div>
         ) : (
           /* STATO 3: MEDICO COLLEGATO (ACTIVE) */
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <div style={{ backgroundColor: '#e8f5e9', color: '#1b5e20', padding: '24px', borderRadius: '12px', border: '1px solid #c8e6c9' }}>
-              <h3 style={{ marginBottom: '10px', color: '#2e7d32' }}>✅ Dottore Collegato</h3>
-              <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#5B120F', margin: '12px 0' }}>
+          <div style={{ width: '100%', marginTop: '10px', textAlign: 'center' }}>
+            <div style={{
+              backgroundColor: 'rgba(122, 171, 138, 0.15)',
+              color: 'var(--pv-sage-deep, #274433)',
+              padding: '26px 20px',
+              borderRadius: '16px',
+              border: '1.5px solid rgba(122, 171, 138, 0.35)'
+            }}>
+              <h3 style={{ marginBottom: '10px', color: 'var(--pv-sage-dark, #4d7c5f)', fontSize: '1.2rem' }}>✅ Dottore Collegato</h3>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--pv-sage-deep, #274433)', margin: '12px 0' }}>
                 Dr. {connectionState.doctor?.nome} {connectionState.doctor?.cognome}
               </div>
-              <p style={{ fontSize: '0.9rem', color: '#444' }}>
-                Codice Medico: <strong style={{ letterSpacing: '1px' }}>{connectionState.doctor?.doctor_code}</strong>
+              <p style={{ fontSize: '0.92rem', color: '#4a5568' }}>
+                Codice Medico: <strong style={{ letterSpacing: '1px', color: 'var(--pv-sage-dark, #4d7c5f)' }}>{connectionState.doctor?.doctor_code}</strong>
               </p>
             </div>
           </div>

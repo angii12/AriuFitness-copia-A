@@ -8,15 +8,19 @@
   border: none;
   font-size: 1.7rem;
   line-height: 1;
-  color: #5B120F;
+  color: var(--pv-sage-dark, #4d7c5f);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 0.15s ease;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hamburger-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(122, 171, 138, 0.14);
+  color: var(--pv-sage-deep, #274433);
 }
 
 /* ── Dropdown menu ── */
@@ -24,15 +28,16 @@
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  min-width: 220px;
+  min-width: 230px;
   max-height: calc(100dvh - 90px);
   overflow-y: auto;
   overflow-x: hidden;
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-radius: 18px;
+  border: 1.5px solid rgba(122, 171, 138, 0.22);
+  box-shadow: 0 12px 36px rgba(77, 124, 95, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
   z-index: 200;
-  padding: 8px 0;
+  padding: 8px;
   animation: hm-in 0.18s ease;
 }
 
@@ -45,24 +50,32 @@
 .hm-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 13px 20px;
-  color: #5B120F;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #2c3e35;
   text-decoration: none;
-  font-size: 0.97rem;
-  font-weight: 600;
+  font-size: 0.94rem;
+  font-weight: 500;
   font-family: inherit;
   background: none;
   border: none;
+  border-radius: 10px;
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
 }
 
 .hm-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: rgba(122, 171, 138, 0.12);
+  color: var(--pv-sage-deep, #274433);
+}
+
+.hm-item--active {
+  background: rgba(122, 171, 138, 0.18);
+  color: var(--pv-sage-deep, #274433);
+  font-weight: 700;
 }
 
 .hm-icon {
@@ -74,12 +87,16 @@
 
 /* ── Logout ── */
 .hm-logout {
-  color: #ff4444;
+  color: #c93b3b;
+  margin-top: 6px;
+  border-top: 1px solid rgba(122, 171, 138, 0.15);
+  padding-top: 10px;
+  border-radius: 0 0 10px 10px;
 }
 
 .hm-logout:hover {
-  background: rgba(255, 68, 68, 0.12);
-  color: #ff4444;
+  background: rgba(220, 53, 69, 0.08);
+  color: #b02a37;
 }
 
 /* ── Mobile portrait: menu a larghezza piena ── */
